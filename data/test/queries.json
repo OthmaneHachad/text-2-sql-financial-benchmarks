@@ -1,0 +1,9 @@
+[
+    {
+        "id": 1,
+        "question": "",
+        "ground_truth_sql": "",
+        "difficulty": "easy/medium/hard",
+        "category": "aggregation/selection/time-series/cross-dataset/hierarchical/grouping"
+    },
+]

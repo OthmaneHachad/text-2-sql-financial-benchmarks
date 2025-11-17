@@ -1,0 +1,12 @@
+# Python Package Requirements for Economic Data Integration
+
+# Core data manipulation
+pandas>=1.3.0
+
+# Excel file handling
+openpyxl>=3.0.0
+
+# Progress bars for long-running operations
+tqdm>=4.60.0
+
+# SQLite is built into Python, no separate package needed
