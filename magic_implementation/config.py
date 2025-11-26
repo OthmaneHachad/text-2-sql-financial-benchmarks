@@ -2,6 +2,7 @@
 Configuration for MAGIC implementation
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,8 +15,13 @@ DEVELOPMENT_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
 BENCHMARK_MODEL = "Qwen/Qwen2.5-32B-Instruct"
 CURRENT_MODEL = DEVELOPMENT_MODEL
 
-# Database
-DB_PATH = "../database/economic_data.db"
+# Paths - Repository-relative paths (works from any location)
+# Get repository root (config.py is in magic_implementation/ directory)
+REPO_ROOT = Path(__file__).parent.parent
+MAIN_REPO = REPO_ROOT  # Alias for backward compatibility
+DB_PATH = str(REPO_ROOT / "database/economic_data.db")
+TRAIN_DATA_PATH = str(REPO_ROOT / "data/train/queries.json")
+TEST_DATA_PATH = str(REPO_ROOT / "data/test/queries.json")
 
 # Generation Parameters
 TEMPERATURE = {
