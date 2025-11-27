@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "question": "Calculate the total general government revenue for Brazil in 2020, expressed as a percent of GDP",
+    "ground_truth_sql": "SELECT \n    c.country_name,\n    i.indicator_name,\n    g.value AS revenue_pct_gdp\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Brazil'\n    AND g.year = 2020\n    AND s.sector_name = 'General government'\n    AND i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis'\n    AND g.transformation = 'Percent of GDP'",
+    "difficulty": "medium",
+    "category": "aggregation"
+  },
+  {
+    "id": 2,
+    "question": "Show the year-over-year change in net lending/borrowing for Singapore's general government from 2015 to 2022, identifying years with deficits (negative values)",
+    "ground_truth_sql": "WITH Yearly_Values AS (\n    SELECT \n        g.year,\n        g.value AS current_value,\n        LAG(g.value) OVER (ORDER BY g.year) AS previous_value\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE c.country_name = 'Singapore'\n        AND s.sector_name = 'General government'\n        AND i.indicator_name = 'Net lending (+) / net borrowing (-), Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n        AND g.year BETWEEN 2015 AND 2022\n)\nSELECT \n    year,\n    current_value,\n    previous_value,\n    (current_value - previous_value) AS yoy_change,\n    CASE \n        WHEN current_value < 0 THEN 'Deficit'\n        ELSE 'Surplus'\n    END AS fiscal_status\nFROM Yearly_Values\nWHERE previous_value IS NOT NULL\nORDER BY year",
+    "difficulty": "hard",
+    "category": "temporal_analysis"
+  },
+  {
+    "id": 3,
+    "question": "Compare tax revenues as a percentage of GDP across countries with good data coverage (Singapore, Australia, Israel, South Africa, Chile) for 2020, ranking them from highest to lowest",
+    "ground_truth_sql": "WITH Tax_Revenue AS (\n    SELECT \n        c.country_name,\n        g.value AS tax_revenue_pct_gdp\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE c.country_name IN ('Singapore', 'Australia', 'Israel', 'South Africa', 'Chile')\n        AND g.year = 2020\n        AND s.sector_name = 'General government'\n        AND i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n),\nAvg_Tax AS (\n    SELECT AVG(tax_revenue_pct_gdp) AS avg_tax_revenue\n    FROM Tax_Revenue\n)\nSELECT \n    t.country_name,\n    t.tax_revenue_pct_gdp,\n    a.avg_tax_revenue AS group_average,\n    (t.tax_revenue_pct_gdp - a.avg_tax_revenue) AS difference_from_avg\nFROM Tax_Revenue t\nCROSS JOIN Avg_Tax a\nORDER BY t.tax_revenue_pct_gdp DESC",
+    "difficulty": "hard",
+    "category": "cross_country_comparison"
+  },
+  {
+    "id": 4,
+    "question": "For each year from 2018 to 2022, calculate the ratio of state government expenses to general government expenses for Brazil",
+    "ground_truth_sql": "SELECT \n    g.year,\n    SUM(CASE WHEN s.sector_name = 'State Government' THEN g.value ELSE 0 END) AS state_expenses_pct_gdp,\n    SUM(CASE WHEN s.sector_name = 'General government' THEN g.value ELSE 0 END) AS general_govt_expenses_pct_gdp,\n    CASE \n        WHEN SUM(CASE WHEN s.sector_name = 'General government' THEN g.value ELSE 0 END) > 0\n        THEN (SUM(CASE WHEN s.sector_name = 'State Government' THEN g.value ELSE 0 END) / \n              SUM(CASE WHEN s.sector_name = 'General government' THEN g.value ELSE 0 END) * 100)\n        ELSE NULL\n    END AS state_pct_of_general\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Brazil'\n    AND s.sector_name IN ('State Government', 'General government')\n    AND i.indicator_name = 'Expense, Transactions (cash basis of recording), Cash basis'\n    AND g.transformation = 'Percent of GDP'\n    AND g.year BETWEEN 2018 AND 2022\nGROUP BY g.year\nORDER BY g.year",
+    "difficulty": "hard",
+    "category": "ratio_calculation"
+  },
+  {
+    "id": 5,
+    "question": "Identify countries where total expenditure as percent of GDP for general government increased by more than 5 percentage points between 2019 and 2021",
+    "ground_truth_sql": "WITH Expenditure_By_Year AS (\n    SELECT \n        c.country_name,\n        SUM(CASE WHEN g.year = 2019 THEN g.value ELSE 0 END) AS exp_2019,\n        SUM(CASE WHEN g.year = 2021 THEN g.value ELSE 0 END) AS exp_2021\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE s.sector_name = 'General government'\n        AND i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n        AND g.year IN (2019, 2021)\n    GROUP BY c.country_name\n    HAVING SUM(CASE WHEN g.year = 2019 THEN 1 ELSE 0 END) > 0\n       AND SUM(CASE WHEN g.year = 2021 THEN 1 ELSE 0 END) > 0\n)\nSELECT \n    country_name,\n    exp_2019,\n    exp_2021,\n    (exp_2021 - exp_2019) AS change_pct_points\nFROM Expenditure_By_Year\nWHERE (exp_2021 - exp_2019) > 5\nORDER BY (exp_2021 - exp_2019) DESC",
+    "difficulty": "hard",
+    "category": "change_detection"
+  },
+  {
+    "id": 6,
+    "question": "Find the country with the largest deterioration in net lending/borrowing (as percent of GDP) during 2019-2020",
+    "ground_truth_sql": "WITH balance AS (\n    SELECT\n        c.country_name,\n        g.year,\n        g.value AS net_lending_pct_gdp\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE s.sector_name = 'General government'\n        AND i.indicator_name = 'Net lending (+) / net borrowing (-), Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n        AND g.year IN (2019, 2020)\n),\npaired AS (\n    SELECT\n        b2019.country_name,\n        b2019.net_lending_pct_gdp AS value_2019,\n        b2020.net_lending_pct_gdp AS value_2020,\n        (b2020.net_lending_pct_gdp - b2019.net_lending_pct_gdp) AS change_2020_minus_2019\n    FROM balance b2019\n    JOIN balance b2020\n      ON b2019.country_name = b2020.country_name\n     AND b2019.year = 2019\n     AND b2020.year = 2020\n)\nSELECT\n    country_name,\n    value_2019,\n    value_2020,\n    change_2020_minus_2019\nFROM paired\nORDER BY change_2020_minus_2019 ASC\nLIMIT 1",
+    "difficulty": "hard",
+    "category": "temporal_analysis"
+  },
+  {
+    "id": 7,
+    "question": "Find countries with high expenditure (>40% of GDP) and low tax revenue (<20% of GDP) for general government in 2015-2020 period average",
+    "ground_truth_sql": "WITH annual_data AS (\n    SELECT\n        c.country_name,\n        g.year,\n        SUM(CASE WHEN i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) AS tax_pct_gdp,\n        SUM(CASE WHEN i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) AS exp_pct_gdp\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE s.sector_name = 'General government'\n        AND g.transformation = 'Percent of GDP'\n        AND g.year BETWEEN 2015 AND 2020\n    GROUP BY c.country_name, g.year\n),\ncountry_avgs AS (\n    SELECT\n        country_name,\n        AVG(tax_pct_gdp) AS avg_tax_pct_gdp,\n        AVG(exp_pct_gdp) AS avg_exp_pct_gdp\n    FROM annual_data\n    WHERE tax_pct_gdp > 0 OR exp_pct_gdp > 0\n    GROUP BY country_name\n)\nSELECT\n    country_name,\n    avg_tax_pct_gdp,\n    avg_exp_pct_gdp\nFROM country_avgs\nWHERE avg_tax_pct_gdp < 20.0\n  AND avg_exp_pct_gdp > 40.0\nORDER BY avg_exp_pct_gdp DESC",
+    "difficulty": "hard",
+    "category": "filtering_aggregation"
+  },
+  {
+    "id": 8,
+    "question": "Find country-years with high unemployment rate (>10%) from GEM data between 2010 and 2020",
+    "ground_truth_sql": "SELECT\n    c.country_name,\n    g.year,\n    g.value AS unemployment_rate\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'Unemployment Rate'\n    AND g.year BETWEEN 2010 AND 2020\n    AND g.value > 10\nORDER BY g.value DESC",
+    "difficulty": "medium",
+    "category": "filtering"
+  },
+  {
+    "id": 9,
+    "question": "Calculate average GDP at market prices (constant 2010 US$) by country for 2015-2020, and rank the top 10 countries",
+    "ground_truth_sql": "SELECT\n    c.country_name,\n    AVG(g.value) AS avg_gdp_millions,\n    COUNT(*) AS years_of_data\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'GDP at market prices'\n    AND i.unit = 'constant 2010 US$, millions'\n    AND g.year BETWEEN 2015 AND 2020\nGROUP BY c.country_name\nORDER BY avg_gdp_millions DESC\nLIMIT 10",
+    "difficulty": "medium",
+    "category": "aggregation_ranking"
+  },
+  {
+    "id": 10,
+    "question": "Compare government revenue and expenditure as percent of GDP for Australia across all available years, showing the fiscal balance (revenue minus expenditure)",
+    "ground_truth_sql": "SELECT\n    g.year,\n    SUM(CASE WHEN i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) AS revenue_pct_gdp,\n    SUM(CASE WHEN i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) AS expenditure_pct_gdp,\n    SUM(CASE WHEN i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) -\n    SUM(CASE WHEN i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis' THEN g.value ELSE 0 END) AS fiscal_balance\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Australia'\n    AND s.sector_name = 'General government'\n    AND g.transformation = 'Percent of GDP'\n    AND i.indicator_name IN ('Revenue, Transactions (cash basis of recording), Cash basis', \n                             'Expenditure, Transactions (cash basis of recording), Cash basis')\nGROUP BY g.year\nHAVING SUM(CASE WHEN i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis' THEN 1 ELSE 0 END) > 0\n   AND SUM(CASE WHEN i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis' THEN 1 ELSE 0 END) > 0\nORDER BY g.year",
+    "difficulty": "hard",
+    "category": "cross_indicator_comparison"
+  },
+  {
+    "id": 11,
+    "question": "Calculate year-over-year GDP growth rate using constant 2010 US$ data for the United States from 2010 to 2020",
+    "ground_truth_sql": "WITH gdp_data AS (\n    SELECT\n        g.year,\n        g.value AS gdp_value\n    FROM gem_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE c.country_name = 'United States'\n        AND i.indicator_name = 'GDP at market prices'\n        AND i.unit = 'constant 2010 US$, millions'\n        AND g.year BETWEEN 2009 AND 2020\n)\nSELECT\n    year,\n    gdp_value,\n    LAG(gdp_value) OVER (ORDER BY year) AS prev_gdp,\n    ROUND(((gdp_value - LAG(gdp_value) OVER (ORDER BY year)) / \n           LAG(gdp_value) OVER (ORDER BY year)) * 100, 2) AS yoy_growth_pct\nFROM gdp_data\nWHERE year >= 2010\nORDER BY year",
+    "difficulty": "hard",
+    "category": "temporal_calculation"
+  },
+  {
+    "id": 12,
+    "question": "Using GEM CPI data, find countries where inflation (CPI % year-over-year) exceeded 10% in any year between 2015 and 2023",
+    "ground_truth_sql": "SELECT DISTINCT\n    c.country_name,\n    g.year,\n    g.value AS cpi_yoy_pct\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'CPI Price'\n    AND i.unit = '% y-o-y, nominal'\n    AND g.year BETWEEN 2015 AND 2023\n    AND g.value > 10\nORDER BY g.value DESC",
+    "difficulty": "medium",
+    "category": "filtering"
+  }
+]

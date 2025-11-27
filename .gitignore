@@ -64,6 +64,17 @@ PRE_PHASE_0_CHECKLIST.md
 MAGIC_IMPLEMENTATION_PLAN.md
 reorganize_project.py
 MODEL_SELECTION_GUIDE.md
+COMMIT_MAGIC.sh
+GIT_COMMANDS.sh
+COMMIT_INSTRUCTIONS.md
+verify_commit.sh
+Text2SQL-Questions.csv
+CLAUDE.md
+PROJECT_STATUS.md
+RESTRUCTURE_SUMMARY.md
+
+# Old structure (to be removed after migration)
+magic_implementation/
 
 # Documentation (personal notes)
 docs/

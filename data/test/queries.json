@@ -1,9 +1,149 @@
 [
-    {
-        "id": 1,
-        "question": "",
-        "ground_truth_sql": "",
-        "difficulty": "easy/medium/hard",
-        "category": "aggregation/selection/time-series/cross-dataset/hierarchical/grouping"
-    },
+  {
+    "id": 1,
+    "question": "List all available sectors in the GFS data",
+    "ground_truth_sql": "SELECT sector_name FROM sectors ORDER BY sector_name",
+    "difficulty": "simple",
+    "category": "select_all"
+  },
+  {
+    "id": 2,
+    "question": "How many GEM observations are in the database?",
+    "ground_truth_sql": "SELECT COUNT(*) AS observation_count FROM gem_observations",
+    "difficulty": "simple",
+    "category": "count"
+  },
+  {
+    "id": 3,
+    "question": "What is the latest year in the GEM observations?",
+    "ground_truth_sql": "SELECT MAX(year) AS latest_year FROM gem_observations",
+    "difficulty": "simple",
+    "category": "max"
+  },
+  {
+    "id": 4,
+    "question": "List countries whose names start with 'A'",
+    "ground_truth_sql": "SELECT country_name FROM countries WHERE country_name LIKE 'A%' ORDER BY country_name",
+    "difficulty": "simple",
+    "category": "pattern_match"
+  },
+  {
+    "id": 5,
+    "question": "What is the earliest year in the GFS observations?",
+    "ground_truth_sql": "SELECT MIN(year) AS earliest_year FROM gfs_observations",
+    "difficulty": "simple",
+    "category": "min"
+  },
+  {
+    "id": 6,
+    "question": "How many observations have 'Percent of GDP' as the transformation?",
+    "ground_truth_sql": "SELECT COUNT(*) AS count FROM gfs_observations WHERE transformation = 'Percent of GDP'",
+    "difficulty": "simple",
+    "category": "count_filtered"
+  },
+  {
+    "id": 7,
+    "question": "Show government revenue (percent of GDP) for Australia from 2010 to 2020",
+    "ground_truth_sql": "SELECT g.year, g.value AS revenue_pct_gdp\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Australia'\nAND s.sector_name = 'General government'\nAND i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2010 AND 2020\nORDER BY g.year",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 8,
+    "question": "Show the stock market index for the United Kingdom from 2015 to 2023",
+    "ground_truth_sql": "SELECT g.year, g.value AS stock_market\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'United Kingdom'\nAND i.indicator_name = 'Stock Markets'\nAND g.year BETWEEN 2015 AND 2023\nORDER BY g.year",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 9,
+    "question": "Show GDP at market prices for the United States for all available years",
+    "ground_truth_sql": "SELECT g.year, g.value AS gdp_millions\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'United States'\nAND i.indicator_name = 'GDP at market prices'\nAND i.unit = 'constant 2010 US$, millions'\nORDER BY g.year",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 10,
+    "question": "Show terms of trade for Australia from 2010 to 2023",
+    "ground_truth_sql": "SELECT g.year, g.value AS terms_of_trade\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Australia'\nAND i.indicator_name = 'Terms of Trade'\nAND g.year BETWEEN 2010 AND 2023\nORDER BY g.year",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 11,
+    "question": "Find country-years with high unemployment rate (>10%) from GEM data between 2010 and 2020",
+    "ground_truth_sql": "SELECT\n    c.country_name,\n    g.year,\n    g.value AS unemployment_rate\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'Unemployment Rate'\n    AND g.year BETWEEN 2010 AND 2020\n    AND g.value > 10\nORDER BY g.value DESC",
+    "difficulty": "medium",
+    "category": "filtering"
+  },
+  {
+    "id": 12,
+    "question": "List the top 5 countries by number of GEM observations",
+    "ground_truth_sql": "SELECT c.country_name, COUNT(*) AS obs_count\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nGROUP BY c.country_name\nORDER BY obs_count DESC\nLIMIT 5",
+    "difficulty": "medium",
+    "category": "join_aggregation_limit"
+  },
+  {
+    "id": 13,
+    "question": "Show government social benefits (percent of GDP) for Germany from 2000 to 2020",
+    "ground_truth_sql": "SELECT g.year, g.value AS social_benefits_pct_gdp\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Germany'\nAND s.sector_name = 'General government'\nAND i.indicator_name = 'Social benefits, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2000 AND 2020\nORDER BY g.year",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 14,
+    "question": "Count the number of countries with GEM data for each year",
+    "ground_truth_sql": "SELECT year, COUNT(DISTINCT country_id) AS country_count\nFROM gem_observations\nGROUP BY year\nORDER BY year",
+    "difficulty": "medium",
+    "category": "aggregation"
+  },
+  {
+    "id": 15,
+    "question": "What is the sum of all GFS observation values for the year 2020?",
+    "ground_truth_sql": "SELECT SUM(value) AS total_value\nFROM gfs_observations\nWHERE year = 2020",
+    "difficulty": "medium",
+    "category": "aggregation"
+  },
+  {
+    "id": 16,
+    "question": "List all countries with tax revenue data for 2020",
+    "ground_truth_sql": "SELECT DISTINCT c.country_name\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis'\nAND g.year = 2020\nORDER BY c.country_name",
+    "difficulty": "medium",
+    "category": "join_filter"
+  },
+  {
+    "id": 17,
+    "question": "What is the average value by sector for GFS observations in 2020?",
+    "ground_truth_sql": "SELECT s.sector_name, AVG(g.value) AS avg_value\nFROM gfs_observations g\nJOIN sectors s ON g.sector_id = s.sector_id\nWHERE g.year = 2020\nGROUP BY s.sector_name\nORDER BY avg_value DESC",
+    "difficulty": "medium",
+    "category": "join_aggregation"
+  },
+  {
+    "id": 18,
+    "question": "Find the top 5 countries by combined GFS and GEM data availability (total observations)",
+    "ground_truth_sql": "WITH combined AS (\n    SELECT country_id, 'GFS' AS source FROM gfs_observations\n    UNION ALL\n    SELECT country_id, 'GEM' AS source FROM gem_observations\n)\nSELECT c.country_name, \n       SUM(CASE WHEN source = 'GFS' THEN 1 ELSE 0 END) AS gfs_obs,\n       SUM(CASE WHEN source = 'GEM' THEN 1 ELSE 0 END) AS gem_obs,\n       COUNT(*) AS total_obs\nFROM combined\nJOIN countries c ON combined.country_id = c.country_id\nGROUP BY c.country_name\nORDER BY total_obs DESC\nLIMIT 5",
+    "difficulty": "hard",
+    "category": "union_aggregation"
+  },
+  {
+    "id": 19,
+    "question": "Calculate the correlation between government revenue and expenditure across all countries for 2019",
+    "ground_truth_sql": "WITH paired_data AS (\n    SELECT c.country_name,\n           SUM(CASE WHEN i.indicator_name LIKE '%Revenue%' THEN g.value ELSE 0 END) AS revenue,\n           SUM(CASE WHEN i.indicator_name LIKE '%Expenditure%' THEN g.value ELSE 0 END) AS expenditure\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE s.sector_name = 'General government'\n    AND g.transformation = 'Percent of GDP'\n    AND g.year = 2019\n    GROUP BY c.country_name\n    HAVING SUM(CASE WHEN i.indicator_name LIKE '%Revenue%' THEN 1 ELSE 0 END) > 0\n       AND SUM(CASE WHEN i.indicator_name LIKE '%Expenditure%' THEN 1 ELSE 0 END) > 0\n),\nstats AS (\n    SELECT \n        COUNT(*) AS n,\n        SUM(revenue) AS sum_x,\n        SUM(expenditure) AS sum_y,\n        SUM(revenue * expenditure) AS sum_xy,\n        SUM(revenue * revenue) AS sum_xx,\n        SUM(expenditure * expenditure) AS sum_yy\n    FROM paired_data\n)\nSELECT \n    n AS sample_size,\n    (n * sum_xy - sum_x * sum_y) / \n    SQRT((n * sum_xx - sum_x * sum_x) * (n * sum_yy - sum_y * sum_y)) AS correlation\nFROM stats",
+    "difficulty": "hard",
+    "category": "statistical"
+  },
+  {
+    "id": 20,
+    "question": "Compare tax revenues as a percentage of GDP across countries with good data coverage (Singapore, Australia, Israel, South Africa, Chile) for 2020, ranking them from highest to lowest",
+    "ground_truth_sql": "WITH Tax_Revenue AS (\n    SELECT \n        c.country_name,\n        g.value AS tax_revenue_pct_gdp\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE c.country_name IN ('Singapore', 'Australia', 'Israel', 'South Africa', 'Chile')\n        AND g.year = 2020\n        AND s.sector_name = 'General government'\n        AND i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n),\nAvg_Tax AS (\n    SELECT AVG(tax_revenue_pct_gdp) AS avg_tax_revenue\n    FROM Tax_Revenue\n)\nSELECT \n    t.country_name,\n    t.tax_revenue_pct_gdp,\n    a.avg_tax_revenue AS group_average,\n    (t.tax_revenue_pct_gdp - a.avg_tax_revenue) AS difference_from_avg\nFROM Tax_Revenue t\nCROSS JOIN Avg_Tax a\nORDER BY t.tax_revenue_pct_gdp DESC",
+    "difficulty": "hard",
+    "category": "cross_country_comparison"
+  },
+  {
+    "id": 21,
+    "question": "Compare government expenditure between central and local government for Brazil over 2015-2022",
+    "ground_truth_sql": "SELECT g.year,\n       SUM(CASE WHEN s.sector_name = 'Central government including social security' THEN g.value ELSE 0 END) AS central_govt,\n       SUM(CASE WHEN s.sector_name = 'Local Government' THEN g.value ELSE 0 END) AS local_govt,\n       SUM(CASE WHEN s.sector_name = 'Central government including social security' THEN g.value ELSE 0 END) -\n       SUM(CASE WHEN s.sector_name = 'Local Government' THEN g.value ELSE 0 END) AS difference\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Brazil'\nAND i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2015 AND 2022\nGROUP BY g.year\nORDER BY g.year",
+    "difficulty": "hard",
+    "category": "cross_sector_comparison"
+  }
 ]

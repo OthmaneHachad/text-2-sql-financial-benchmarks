@@ -11,14 +11,13 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # Add parent directories to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from simple_text2sql import BaselineText2SQL, get_economic_schema
-from utils.database import is_correct_sql, execute_sql, format_schema
-from utils.data_loader import load_queries
-from utils.helpers import CostTracker
-from config import DB_PATH
+from magic.baseline.simple_text2sql import BaselineText2SQL
+from shared.database import is_correct_sql, execute_sql, format_schema
+from shared.data_loader import load_queries
+from shared.helpers import CostTracker
+from shared.config import DB_PATH
 
 
 def test_baseline(
@@ -47,8 +46,8 @@ def test_baseline(
         print("Error: TOGETHER_API_KEY not set")
         return None
     
-    generator = BaselineText2SQL(api_key=api_key)
-    schema = get_economic_schema()
+    generator = BaselineText2SQL()
+    schema = format_schema(db_path)
     
     # Limit queries if specified
     if max_queries:
