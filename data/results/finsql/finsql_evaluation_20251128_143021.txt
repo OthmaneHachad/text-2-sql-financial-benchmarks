@@ -1,0 +1,517 @@
+
+================================================================================
+TESTING FINSQL LORA INFERENCE
+================================================================================
+
+Testing on 21 queries (out of 21 total)
+
+✓ Loaded 4 LoRA plugins:
+  - cot_specialist
+  - robustness_specialist
+  - structure_specialist
+  - hard_cases_specialist
+
+--------------------------------------------------------------------------------
+STRATEGY: Individual Ensemble (4 plugins)
+--------------------------------------------------------------------------------
+
+
+[1/21] List all available sectors in the GFS data...
+
+Candidates:
+  cot_specialist           : SELECT sector_name
+FROM gfs_data;...
+  robustness_specialist    : SELECT DISTINCT sector_name FROM sectors...
+  structure_specialist     : SELECT sector_name FROM sectors
+ORDER BY sector_name...
+  hard_cases_specialist    : SELECT DISTINCT T1.sector_name
+FROM sectors AS T1
+INNER JOIN gfs_observations AS...
+
+✓ CORRECT (selected by structure_specialist)
+
+[2/21] How many GEM observations are in the database?...
+
+Candidates:
+  cot_specialist           : SELECT COUNT(*) AS total_observations
+FROM gem_observations;...
+  robustness_specialist    : SELECT COUNT(*) AS observation_count FROM gem_observations...
+  structure_specialist     : Pattern: COUNT(*) AS [metric] FROM [table]
+Query: SELECT COUNT(*) AS gem_obs_cou...
+  hard_cases_specialist    : SELECT COUNT(observation_id) FROM gem_observations...
+
+✗ INCORRECT
+Expected: SELECT COUNT(*) AS observation_count FROM gem_observations...
+Got:      Pattern: COUNT(*) AS [metric] FROM [table]
+Query: SELECT COUNT(*) AS gem_obs_count FROM gem_observat...
+
+[3/21] What is the latest year in the GEM observations?...
+
+Candidates:
+  cot_specialist           : SELECT MAX(year) AS latest_year
+FROM gem_observations;...
+  robustness_specialist    : SELECT MAX(year) AS latest_year FROM gem_observations...
+  structure_specialist     : SELECT MAX(year) AS latest_year FROM gem_observations
+Pattern: SELECT MAX([YEAR]...
+  hard_cases_specialist    : SELECT MAX(year) FROM gem_observations...
+
+✗ INCORRECT
+Expected: SELECT MAX(year) AS latest_year FROM gem_observations...
+Got:      SELECT MAX(year) AS latest_year FROM gem_observations
+Pattern: SELECT MAX([YEAR]) AS [METRIC] FROM [...
+
+[4/21] List countries whose names start with 'A'...
+
+Candidates:
+  cot_specialist           : SELECT country_name
+FROM countries
+WHERE country_name LIKE 'A%';...
+  robustness_specialist    : SELECT country_name FROM countries WHERE country_name LIKE 'A%'
+ORDER BY country...
+  structure_specialist     : SELECT country_name FROM countries WHERE country_name LIKE 'A%'
+ORDER BY country...
+  hard_cases_specialist    : SELECT country_name FROM countries WHERE country_name LIKE 'A%'...
+
+✓ CORRECT (selected by consensus)
+
+[5/21] What is the earliest year in the GFS observations?...
+
+Candidates:
+  cot_specialist           : SELECT MIN(year) AS earliest_year
+FROM gfs_observations;...
+  robustness_specialist    : SELECT MIN(year) AS earliest_year FROM gfs_observations...
+  structure_specialist     : SELECT MIN(year) AS earliest_year
+FROM gfs_observations...
+  hard_cases_specialist    : SELECT MIN(year) FROM gfs_observations...
+
+✓ CORRECT (selected by structure_specialist)
+
+[6/21] How many observations have 'Percent of GDP' as the transformation?...
+
+Candidates:
+  cot_specialist           : SELECT COUNT(*) 
+FROM transformations 
+WHERE transformation = 'Percent of GDP';...
+  robustness_specialist    : SELECT COUNT(*) AS observation_count
+FROM gfs_observations
+WHERE transformation ...
+  structure_specialist     : SELECT COUNT(*) AS obs_count FROM gfs_observations WHERE transformation = [STRIN...
+  hard_cases_specialist    : SELECT COUNT(*) FROM gfs_observations WHERE transformation = 'Percent of GDP'...
+
+✗ INCORRECT
+Expected: SELECT COUNT(*) AS count FROM gfs_observations WHERE transformation = 'Percent of GDP'...
+Got:      SELECT COUNT(*) AS obs_count FROM gfs_observations WHERE transformation = [STRING] AND sector_id = [...
+
+[7/21] Show government revenue (percent of GDP) for Australia from 2010 to 20...
+
+Candidates:
+  cot_specialist           : SELECT 
+  year,
+  AVG(value) / percentage_of_gdp AS government_revenue_percent_o...
+  robustness_specialist    : SELECT g.year, g.value AS revenue_percent_gdp
+FROM gfs_observations g
+JOIN count...
+  structure_specialist     : SELECT g.[YEAR], g.[VALUE] AS government_revenue_percent_of_GDP
+FROM gfs_observa...
+  hard_cases_specialist    : SELECT 
+  g.year,
+  g.value AS government_revenue_percent_of_gdp
+FROM 
+  gem_obs...
+
+✗ INCORRECT
+Expected: SELECT g.year, g.value AS revenue_pct_gdp
+FROM gfs_observations g
+JOIN countries c ON g.country_id =...
+Got:      SELECT g.[YEAR], g.[VALUE] AS government_revenue_percent_of_GDP
+FROM gfs_observations g
+JOIN countri...
+
+[8/21] Show the stock market index for the United Kingdom from 2015 to 2023...
+
+Candidates:
+  cot_specialist           : SELECT 
+  smd.stock_market_index,
+  ci.country_name,
+  tp.year
+FROM 
+  stock_mar...
+  robustness_specialist    : SELECT g.year, g.value AS stock_market_index
+FROM gem_observations g
+JOIN countr...
+  structure_specialist     : SELECT g.[YEAR], g.[VALUE] AS stock_market_index
+FROM gfs_observations g
+JOIN co...
+  hard_cases_specialist    : WITH uk_stock_market AS (
+  SELECT g.value
+  FROM gem_observations g
+  JOIN coun...
+
+✗ INCORRECT
+Expected: SELECT g.year, g.value AS stock_market
+FROM gem_observations g
+JOIN countries c ON g.country_id = c....
+Got:      SELECT g.[YEAR], g.[VALUE] AS stock_market_index
+FROM gfs_observations g
+JOIN countries c ON g.[ID] ...
+
+[9/21] Show GDP at market prices for the United States for all available year...
+
+Candidates:
+  cot_specialist           : SELECT 
+  gdp_data.year,
+  gdp_data.gdp_market_price
+FROM 
+  gdp_data
+  INNER JO...
+  robustness_specialist    : SELECT g.year, g.value AS gdp
+FROM gem_observations g
+JOIN countries c ON g.coun...
+  structure_specialist     : SELECT g.[YEAR], g.[VALUE] AS gdp_market_prices
+FROM gfs_observations g
+JOIN cou...
+  hard_cases_specialist    : SELECT 
+    g.year AS year,
+    g.value AS gdp
+FROM 
+    gem_observations g
+JOIN...
+
+✗ INCORRECT
+Expected: SELECT g.year, g.value AS gdp_millions
+FROM gem_observations g
+JOIN countries c ON g.country_id = c....
+Got:      SELECT g.[YEAR], g.[VALUE] AS gdp_market_prices
+FROM gfs_observations g
+JOIN countries c ON g.[ID] =...
+
+[10/21] Show terms of trade for Australia from 2010 to 2023...
+
+Candidates:
+  cot_specialist           : SELECT 
+  e.year AS year,
+  e.exports_value AS exports_value,
+  i.imports_value ...
+  robustness_specialist    : SELECT g.year, g.value AS terms_of_trade
+FROM gem_observations g
+JOIN countries ...
+  structure_specialist     : SELECT 
+  g.[YEAR],
+  g.[VALUE] AS trade_index
+FROM gfs_observations g
+JOIN coun...
+  hard_cases_specialist    : SELECT 
+    g.year,
+    g.value AS terms_of_trade
+FROM 
+    gem_observations g
+J...
+
+✗ INCORRECT
+Expected: SELECT g.year, g.value AS terms_of_trade
+FROM gem_observations g
+JOIN countries c ON g.country_id = ...
+Got:      SELECT 
+  g.[YEAR],
+  g.[VALUE] AS trade_index
+FROM gfs_observations g
+JOIN countries c ON g.[ID] = ...
+
+[11/21] Find country-years with high unemployment rate (>10%) from GEM data be...
+
+Candidates:
+  cot_specialist           : SELECT 
+  country, 
+  year, 
+  unemployment_rate
+FROM 
+  gem_data
+WHERE 
+  unemp...
+  robustness_specialist    : SELECT c.country_name, g.year, g.value AS unemployment_rate
+FROM gem_observation...
+  structure_specialist     : SELECT c.country_name, g.[YEAR]
+FROM countries c
+JOIN gem_observations g ON c.co...
+  hard_cases_specialist    : SELECT DISTINCT c.country_name, g.year
+FROM countries c
+JOIN gem_observations g ...
+
+✗ INCORRECT
+Expected: SELECT
+    c.country_name,
+    g.year,
+    g.value AS unemployment_rate
+FROM gem_observations g
+JOIN...
+Got:      SELECT c.country_name, g.[YEAR]
+FROM countries c
+JOIN gem_observations g ON c.country_id = g.country...
+
+[12/21] List the top 5 countries by number of GEM observations...
+
+Candidates:
+  cot_specialist           : SELECT c.country_name, COUNT(go.observation_id) AS num_observations
+FROM gem_obs...
+  robustness_specialist    : SELECT c.country_name, COUNT(go.value) AS observation_count
+FROM gem_observation...
+  structure_specialist     : SELECT COUNT(*) AS observation_count, c.country_name
+FROM gem_observations g
+JOI...
+  hard_cases_specialist    : SELECT c.country_name, COUNT(go.observation_id) as num_observations
+FROM countri...
+
+✗ INCORRECT
+Expected: SELECT c.country_name, COUNT(*) AS obs_count
+FROM gem_observations g
+JOIN countries c ON g.country_i...
+Got:      SELECT COUNT(*) AS observation_count, c.country_name
+FROM gem_observations g
+JOIN countries c ON g.[...
+
+[13/21] Show government social benefits (percent of GDP) for Germany from 2000...
+
+Candidates:
+  cot_specialist           : SELECT 
+  year,
+  social_benefits / gdp * 100 AS social_benefits_percent_of_gdp
+...
+  robustness_specialist    : SELECT g.year, g.value AS social_benefits_percent_gdp
+FROM gfs_observations g
+JO...
+  structure_specialist     : SELECT g.[YEAR], g.[VALUE] AS government_social_benefits_percent_of_GDP
+FROM gfs...
+  hard_cases_specialist    : python
+import sqlite3
+import pandas as pd
+
+# Connect to the SQLite database
+conn...
+
+✗ INCORRECT
+Expected: SELECT g.year, g.value AS social_benefits_pct_gdp
+FROM gfs_observations g
+JOIN countries c ON g.coun...
+Got:      SELECT g.[YEAR], g.[VALUE] AS government_social_benefits_percent_of_GDP
+FROM gfs_observations g
+JOIN...
+
+[14/21] Count the number of countries with GEM data for each year...
+
+Candidates:
+  cot_specialist           : SELECT 
+  year,
+  COUNT(DISTINCT country_id) AS num_countries_with_gem_data
+FROM...
+  robustness_specialist    : SELECT year, COUNT(DISTINCT country_id) AS country_count
+FROM gem_observations
+G...
+  structure_specialist     : SELECT COUNT(*) AS country_count, [YEAR] AS year
+FROM gem_observations
+GROUP BY ...
+  hard_cases_specialist    : SELECT 
+    g.year,
+    COUNT(DISTINCT g.country_id) AS num_countries
+FROM 
+    ...
+
+✗ INCORRECT
+Expected: SELECT year, COUNT(DISTINCT country_id) AS country_count
+FROM gem_observations
+GROUP BY year
+ORDER B...
+Got:      SELECT COUNT(*) AS country_count, [YEAR] AS year
+FROM gem_observations
+GROUP BY [YEAR]
+ORDER BY [YEA...
+
+[15/21] What is the sum of all GFS observation values for the year 2020?...
+
+Candidates:
+  cot_specialist           : SELECT 
+  SUM(observation_value) AS total_observation_value
+FROM 
+  gfs_observat...
+  robustness_specialist    : SELECT SUM(value) AS total_value
+FROM gfs_observations
+WHERE year = 2020...
+  structure_specialist     : SELECT SUM([YEAR]) AS total_gfs_observations_2020 FROM gfs_observations WHERE [Y...
+  hard_cases_specialist    : SELECT SUM(value) 
+FROM gfs_observations 
+WHERE year = 2020;...
+
+✗ INCORRECT
+Expected: SELECT SUM(value) AS total_value
+FROM gfs_observations
+WHERE year = 2020...
+Got:      SELECT SUM([YEAR]) AS total_gfs_observations_2020 FROM gfs_observations WHERE [YEAR] = [NUMBER]
+Patt...
+
+[16/21] List all countries with tax revenue data for 2020...
+
+Candidates:
+  cot_specialist           : SELECT c.country_name, tr.tax_amount
+FROM countries c
+JOIN tax_revenue tr ON c.c...
+  robustness_specialist    : SELECT DISTINCT c.country_name
+FROM gfs_observations g
+JOIN countries c ON g.cou...
+  structure_specialist     : SELECT DISTINCT c.country_name
+FROM gfs_observations g
+JOIN countries c ON g.cou...
+  hard_cases_specialist    : SELECT DISTINCT c.country_name
+FROM countries c
+JOIN gfs_observations g ON c.cou...
+
+✗ INCORRECT
+Expected: SELECT DISTINCT c.country_name
+FROM gfs_observations g
+JOIN countries c ON g.country_id = c.country_...
+Got:      SELECT DISTINCT c.country_name
+FROM gfs_observations g
+JOIN countries c ON g.country_id = c.country_...
+
+[17/21] What is the average value by sector for GFS observations in 2020?...
+
+Candidates:
+  cot_specialist           : SELECT s.name, AVG(go.value) AS average_value
+FROM gfs_observations go
+JOIN sect...
+  robustness_specialist    : SELECT s.sector_name, AVG(g.value) AS avg_value
+FROM gfs_observations g
+JOIN sec...
+  structure_specialist     : SELECT AVG([YEAR]) AS avg_value
+FROM gfs_observations
+WHERE [YEAR] = [NUMBER]
+Pa...
+  hard_cases_specialist    : SELECT 
+  s.sector_name,
+  AVG(g.value) AS average_value
+FROM 
+  gfs_observation...
+
+✗ INCORRECT
+Expected: SELECT s.sector_name, AVG(g.value) AS avg_value
+FROM gfs_observations g
+JOIN sectors s ON g.sector_i...
+Got:      SELECT AVG([YEAR]) AS avg_value
+FROM gfs_observations
+WHERE [YEAR] = [NUMBER]
+Pattern: SELECT AVG([M...
+
+[18/21] Find the top 5 countries by combined GFS and GEM data availability (to...
+
+Candidates:
+  cot_specialist           : **Step 1: Identify the necessary data and tables**
+
+To answer this question, we ...
+  robustness_specialist    : SELECT c.country_name, COUNT(g.observation_id) AS gfs_count, COUNT(m.observation...
+  structure_specialist     : SELECT c.country_name,
+       COUNT(g.[YEAR]) AS gfs_count,
+       COUNT(m.[YEAR...
+  hard_cases_specialist    : WITH gfs_counts AS (
+  SELECT country_id, COUNT(*) as gfs_count
+  FROM gfs_obser...
+
+✗ INCORRECT
+Expected: WITH combined AS (
+    SELECT country_id, 'GFS' AS source FROM gfs_observations
+    UNION ALL
+    SE...
+Got:      SELECT c.country_name,
+       COUNT(g.[YEAR]) AS gfs_count,
+       COUNT(m.[YEAR]) AS gem_count,
+   ...
+
+[19/21] Calculate the correlation between government revenue and expenditure a...
+
+Candidates:
+  cot_specialist           : SELECT *
+FROM government_data
+WHERE year = 2019;...
+  robustness_specialist    : WITH gfs_2019 AS (
+    SELECT c.country_name, g.value AS revenue, e.value AS exp...
+  structure_specialist     : SELECT g.[GROUPING_ID] AS country,
+       g.[GROUPING_NAME] AS country_name,
+   ...
+  hard_cases_specialist    : WITH 
+  -- Get the average government revenue and expenditure for 2019
+  avg_gov...
+
+✗ INCORRECT
+Expected: WITH paired_data AS (
+    SELECT c.country_name,
+           SUM(CASE WHEN i.indicator_name LIKE '%Re...
+Got:      SELECT g.[GROUPING_ID] AS country,
+       g.[GROUPING_NAME] AS country_name,
+       g.[GROUPING_VALU...
+
+[20/21] Compare tax revenues as a percentage of GDP across countries with good...
+
+Candidates:
+  cot_specialist           : SELECT *
+FROM Tax_Revenues
+WHERE Country IN ('Singapore', 'Australia', 'Israel',...
+  robustness_specialist    : SELECT c.country_name, g.value AS tax_revenue_pct_gdp
+FROM gfs_observations g
+JO...
+  structure_specialist     : SELECT c.country_name,
+       g.[YEAR],
+       g.[INDICATOR_NAME] AS tax_revenue...
+  hard_cases_specialist    : WITH ranked_countries AS (
+  SELECT 
+    c.country_name,
+    g.value AS tax_reve...
+
+✗ INCORRECT
+Expected: WITH Tax_Revenue AS (
+    SELECT 
+        c.country_name,
+        g.value AS tax_revenue_pct_gdp
+   ...
+Got:      SELECT c.country_name,
+       g.[YEAR],
+       g.[INDICATOR_NAME] AS tax_revenue_gdp,
+       g.[INDI...
+
+[21/21] Compare government expenditure between central and local government fo...
+
+Candidates:
+  cot_specialist           : SELECT 
+  g.year, 
+  g.government_type, 
+  SUM(g.expenditure) AS total_expenditu...
+  robustness_specialist    : WITH central_government AS (
+    SELECT g.year, g.value AS central_value
+    FRO...
+  structure_specialist     : SELECT 
+  g.[YEAR],
+  SUM(CASE WHEN s.sector_name = 'Central government' THEN g....
+  hard_cases_specialist    : ```sql
+WITH 
+  -- Get the country ID for Brazil
+  brazil AS (
+    SELECT country...
+
+✗ INCORRECT
+Expected: SELECT g.year,
+       SUM(CASE WHEN s.sector_name = 'Central government including social security' T...
+Got:      SELECT 
+  g.[YEAR],
+  SUM(CASE WHEN s.sector_name = 'Central government' THEN g.[VALUE] ELSE 0 END) ...
+
+================================================================================
+TEST SUMMARY
+================================================================================
+
+Accuracy: 3/21 (14.3%)
+
+============================================================
+Cost Report (meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo)
+============================================================
+Total tokens:  43,305
+Input tokens:  25,750
+Output tokens: 17,555
+Estimated cost: $0.0078
+============================================================
+

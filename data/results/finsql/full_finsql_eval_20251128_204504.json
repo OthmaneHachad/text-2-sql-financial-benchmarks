@@ -1,0 +1,72 @@
+{
+  "accuracy": 0.8,
+  "correct": 4,
+  "total": 5,
+  "results": [
+    {
+      "id": 1,
+      "question": "List all available sectors in the GFS data",
+      "ground_truth_sql": "SELECT sector_name FROM sectors ORDER BY sector_name",
+      "predicted_sql": "SELECT DISTINCT sector_name, sector_description FROM sectors ORDER BY sector_name",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "sectors",
+        "countries"
+      ]
+    },
+    {
+      "id": 2,
+      "question": "How many GEM observations are in the database?",
+      "ground_truth_sql": "SELECT COUNT(*) AS observation_count FROM gem_observations",
+      "predicted_sql": "SELECT COUNT(*) AS observation_count FROM gem_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "indicators",
+        "sqlite_sequence"
+      ]
+    },
+    {
+      "id": 3,
+      "question": "What is the latest year in the GEM observations?",
+      "ground_truth_sql": "SELECT MAX(year) AS latest_year FROM gem_observations",
+      "predicted_sql": "SELECT MAX(year) AS latest_year FROM gem_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "time_periods",
+        "sqlite_sequence"
+      ]
+    },
+    {
+      "id": 4,
+      "question": "List countries whose names start with 'A'",
+      "ground_truth_sql": "SELECT country_name FROM countries WHERE country_name LIKE 'A%' ORDER BY country_name",
+      "predicted_sql": "SELECT country_name FROM countries WHERE country_name LIKE 'A%';",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "countries",
+        "gfs_observations",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 5,
+      "question": "What is the earliest year in the GFS observations?",
+      "ground_truth_sql": "SELECT MIN(year) AS earliest_year FROM gfs_observations",
+      "predicted_sql": "SELECT MIN(year) AS earliest_year FROM gfs_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "gem_observations",
+        "time_periods"
+      ]
+    }
+  ]
+}

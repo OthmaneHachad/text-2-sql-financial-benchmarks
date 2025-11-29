@@ -1,0 +1,280 @@
+{
+  "accuracy": 0.47619047619047616,
+  "correct": 10,
+  "total": 21,
+  "results": [
+    {
+      "id": 1,
+      "question": "List all available sectors in the GFS data",
+      "ground_truth_sql": "SELECT sector_name FROM sectors ORDER BY sector_name",
+      "predicted_sql": "SELECT DISTINCT sector_name FROM sectors ORDER BY sector_name",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "sectors",
+        "countries"
+      ]
+    },
+    {
+      "id": 2,
+      "question": "How many GEM observations are in the database?",
+      "ground_truth_sql": "SELECT COUNT(*) AS observation_count FROM gem_observations",
+      "predicted_sql": "SELECT COUNT(*) FROM gem_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "indicators",
+        "sqlite_sequence"
+      ]
+    },
+    {
+      "id": 3,
+      "question": "What is the latest year in the GEM observations?",
+      "ground_truth_sql": "SELECT MAX(year) AS latest_year FROM gem_observations",
+      "predicted_sql": "SELECT MAX(year) AS latest_year FROM gem_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "time_periods",
+        "sqlite_sequence"
+      ]
+    },
+    {
+      "id": 4,
+      "question": "List countries whose names start with 'A'",
+      "ground_truth_sql": "SELECT country_name FROM countries WHERE country_name LIKE 'A%' ORDER BY country_name",
+      "predicted_sql": "SELECT country_name FROM countries WHERE country_name LIKE 'A%';",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "countries",
+        "gfs_observations",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 5,
+      "question": "What is the earliest year in the GFS observations?",
+      "ground_truth_sql": "SELECT MIN(year) AS earliest_year FROM gfs_observations",
+      "predicted_sql": "SELECT MIN(year) AS earliest_year FROM gfs_observations",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "gem_observations",
+        "time_periods"
+      ]
+    },
+    {
+      "id": 6,
+      "question": "How many observations have 'Percent of GDP' as the transformation?",
+      "ground_truth_sql": "SELECT COUNT(*) AS count FROM gfs_observations WHERE transformation = 'Percent of GDP'",
+      "predicted_sql": "SELECT COUNT(*) FROM observations WHERE transformation = 'Percent of GDP';",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "gem_observations",
+        "countries"
+      ]
+    },
+    {
+      "id": 7,
+      "question": "Show government revenue (percent of GDP) for Australia from 2010 to 2020",
+      "ground_truth_sql": "SELECT g.year, g.value AS revenue_pct_gdp\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Australia'\nAND s.sector_name = 'General government'\nAND i.indicator_name = 'Revenue, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2010 AND 2020\nORDER BY g.year",
+      "predicted_sql": "SELECT g.value FROM gfs_observations g JOIN time_periods t ON g.year = t.year JOIN countries c ON g.country_id = c.id WHERE g.sector_id = 1 AND g.indicator_id = 15 AND g.frequency = 4 AND g.unit = 'Percent of GDP' AND c.name = 'Australia' AND g.year BETWEEN 2010 AND 2020",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "time_periods",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 8,
+      "question": "Show the stock market index for the United Kingdom from 2015 to 2023",
+      "ground_truth_sql": "SELECT g.year, g.value AS stock_market\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'United Kingdom'\nAND i.indicator_name = 'Stock Markets'\nAND g.year BETWEEN 2015 AND 2023\nORDER BY g.year",
+      "predicted_sql": "SELECT g.year, g.value AS stock_market_index FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id WHERE c.country = 'United Kingdom' AND g.indicator_id = 1 AND g.year BETWEEN 2015 AND 2023 ORDER BY g.year",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "gfs_observations",
+        "time_periods"
+      ]
+    },
+    {
+      "id": 9,
+      "question": "Show GDP at market prices for the United States for all available years",
+      "ground_truth_sql": "SELECT g.year, g.value AS gdp_millions\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'United States'\nAND i.indicator_name = 'GDP at market prices'\nAND i.unit = 'constant 2010 US$, millions'\nORDER BY g.year",
+      "predicted_sql": "SELECT DISTINCT g.year, g.value AS gdp_millions FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id WHERE c.country_name = 'United States' AND g.indicator_id = 1 AND g.year BETWEEN 1990 AND 2020 ORDER BY g.year",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "time_periods",
+        "gem_observations",
+        "gfs_observations"
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Show terms of trade for Australia from 2010 to 2023",
+      "ground_truth_sql": "SELECT g.year, g.value AS terms_of_trade\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Australia'\nAND i.indicator_name = 'Terms of Trade'\nAND g.year BETWEEN 2010 AND 2023\nORDER BY g.year",
+      "predicted_sql": "SELECT g.year, g.value AS terms_of_trade_australia FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id WHERE c.country_name = 'Australia' AND g.transformation = 'Current price' AND g.scale = 'Market prices' AND g.frequency = 'Annual' AND g.year BETWEEN 2010 AND 2023 ORDER BY g.year",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "time_periods",
+        "gem_observations",
+        "gfs_observations"
+      ]
+    },
+    {
+      "id": 11,
+      "question": "Find country-years with high unemployment rate (>10%) from GEM data between 2010 and 2020",
+      "ground_truth_sql": "SELECT\n    c.country_name,\n    g.year,\n    g.value AS unemployment_rate\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'Unemployment Rate'\n    AND g.year BETWEEN 2010 AND 2020\n    AND g.value > 10\nORDER BY g.value DESC",
+      "predicted_sql": "SELECT c.country_name, g.year FROM gem_observations g JOIN countries c ON g.country_id = c.country_id JOIN time_periods t ON g.year = t.year WHERE g.value > 10 AND g.year BETWEEN 2010 AND 2020 ORDER BY g.value DESC",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "time_periods",
+        "countries"
+      ]
+    },
+    {
+      "id": 12,
+      "question": "List the top 5 countries by number of GEM observations",
+      "ground_truth_sql": "SELECT c.country_name, COUNT(*) AS obs_count\nFROM gem_observations g\nJOIN countries c ON g.country_id = c.country_id\nGROUP BY c.country_name\nORDER BY obs_count DESC\nLIMIT 5",
+      "predicted_sql": "SELECT c.country_name, COUNT(*) AS obs_count FROM gem_observations g JOIN countries c ON g.country_id = c.country_id GROUP BY c.country_name ORDER BY obs_count DESC LIMIT 5",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "countries",
+        "gfs_observations"
+      ]
+    },
+    {
+      "id": 13,
+      "question": "Show government social benefits (percent of GDP) for Germany from 2000 to 2020",
+      "ground_truth_sql": "SELECT g.year, g.value AS social_benefits_pct_gdp\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Germany'\nAND s.sector_name = 'General government'\nAND i.indicator_name = 'Social benefits, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2000 AND 2020\nORDER BY g.year",
+      "predicted_sql": "SELECT g.year, g.value AS social_benefits_pct_gdp FROM gem_observations g JOIN countries c ON g.country_id = c.country_id WHERE c.country_name = 'Germany' AND g.indicator_id = 11 AND g.year BETWEEN 2000 AND 2020 ORDER BY g.year",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "gem_observations",
+        "time_periods"
+      ]
+    },
+    {
+      "id": 14,
+      "question": "Count the number of countries with GEM data for each year",
+      "ground_truth_sql": "SELECT year, COUNT(DISTINCT country_id) AS country_count\nFROM gem_observations\nGROUP BY year\nORDER BY year",
+      "predicted_sql": "SELECT year, COUNT(DISTINCT country_id) AS country_count FROM gem_observations GROUP BY year ORDER BY country_count DESC",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "countries",
+        "time_periods"
+      ]
+    },
+    {
+      "id": 15,
+      "question": "What is the sum of all GFS observation values for the year 2020?",
+      "ground_truth_sql": "SELECT SUM(value) AS total_value\nFROM gfs_observations\nWHERE year = 2020",
+      "predicted_sql": "SELECT SUM(T1.value) FROM gfs_observations AS T1 JOIN time_periods AS T2 ON T1.year = T2.year WHERE T1.year = 2020",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "gem_observations",
+        "time_periods"
+      ]
+    },
+    {
+      "id": 16,
+      "question": "List all countries with tax revenue data for 2020",
+      "ground_truth_sql": "SELECT DISTINCT c.country_name\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis'\nAND g.year = 2020\nORDER BY c.country_name",
+      "predicted_sql": "SELECT c.country_name FROM countries c JOIN country_tax_revenue ct ON c.country_id = ct.country_id JOIN tax_revenue tr ON ct.tax_revenue_id = tr.tax_revenue_id WHERE tr.year = 2020;",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "countries",
+        "gfs_observations",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 17,
+      "question": "What is the average value by sector for GFS observations in 2020?",
+      "ground_truth_sql": "SELECT s.sector_name, AVG(g.value) AS avg_value\nFROM gfs_observations g\nJOIN sectors s ON g.sector_id = s.sector_id\nWHERE g.year = 2020\nGROUP BY s.sector_name\nORDER BY avg_value DESC",
+      "predicted_sql": "SELECT s.sector_name, AVG(g.value) AS avg_gfs_value FROM gfs_observations g JOIN sectors s ON g.sector_id = s.sector_id WHERE g.year = 2020 GROUP BY s.sector_name ORDER BY avg_gfs_value DESC",
+      "is_correct": true,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "sectors",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 18,
+      "question": "Find the top 5 countries by combined GFS and GEM data availability (total observations)",
+      "ground_truth_sql": "WITH combined AS (\n    SELECT country_id, 'GFS' AS source FROM gfs_observations\n    UNION ALL\n    SELECT country_id, 'GEM' AS source FROM gem_observations\n)\nSELECT c.country_name, \n       SUM(CASE WHEN source = 'GFS' THEN 1 ELSE 0 END) AS gfs_obs,\n       SUM(CASE WHEN source = 'GEM' THEN 1 ELSE 0 END) AS gem_obs,\n       COUNT(*) AS total_obs\nFROM combined\nJOIN countries c ON combined.country_id = c.country_id\nGROUP BY c.country_name\nORDER BY total_obs DESC\nLIMIT 5",
+      "predicted_sql": "SELECT c.country_name, COUNT(g.year) AS gem_count, COUNT(g2.year) AS gfs_count, COUNT(g.year) + COUNT(g2.year) AS total_count FROM countries c JOIN gem_observations g ON c.country_id = g.country_id JOIN gfs_observations g2 ON c.country_id = g2.country_id WHERE g.year = 2020 AND g2.year = 2020 GROUP BY c.country_name ORDER BY total_count DESC LIMIT 5",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gem_observations",
+        "gfs_observations",
+        "countries"
+      ]
+    },
+    {
+      "id": 19,
+      "question": "Calculate the correlation between government revenue and expenditure across all countries for 2019",
+      "ground_truth_sql": "WITH paired_data AS (\n    SELECT c.country_name,\n           SUM(CASE WHEN i.indicator_name LIKE '%Revenue%' THEN g.value ELSE 0 END) AS revenue,\n           SUM(CASE WHEN i.indicator_name LIKE '%Expenditure%' THEN g.value ELSE 0 END) AS expenditure\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE s.sector_name = 'General government'\n    AND g.transformation = 'Percent of GDP'\n    AND g.year = 2019\n    GROUP BY c.country_name\n    HAVING SUM(CASE WHEN i.indicator_name LIKE '%Revenue%' THEN 1 ELSE 0 END) > 0\n       AND SUM(CASE WHEN i.indicator_name LIKE '%Expenditure%' THEN 1 ELSE 0 END) > 0\n),\nstats AS (\n    SELECT \n        COUNT(*) AS n,\n        SUM(revenue) AS sum_x,\n        SUM(expenditure) AS sum_y,\n        SUM(revenue * expenditure) AS sum_xy,\n        SUM(revenue * revenue) AS sum_xx,\n        SUM(expenditure * expenditure) AS sum_yy\n    FROM paired_data\n)\nSELECT \n    n AS sample_size,\n    (n * sum_xy - sum_x * sum_y) / \n    SQRT((n * sum_xx - sum_x * sum_x) * (n * sum_yy - sum_y * sum_y)) AS correlation\nFROM stats",
+      "predicted_sql": "SELECT g.value AS revenue, e.value AS expenditure FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id WHERE g.year = 2019 AND g.sector_id = 1 AND c.country_name IN ('Australia', 'Canada', 'France', 'Germany', 'India', 'Italy', 'Japan', 'Mexico', 'Russia', 'South Africa', 'South Korea', 'Sweden', 'Switzerland', 'Turkey', 'United Kingdom', 'United States') ORDER BY g.value",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "countries",
+        "gem_observations"
+      ]
+    },
+    {
+      "id": 20,
+      "question": "Compare tax revenues as a percentage of GDP across countries with good data coverage (Singapore, Australia, Israel, South Africa, Chile) for 2020, ranking them from highest to lowest",
+      "ground_truth_sql": "WITH Tax_Revenue AS (\n    SELECT \n        c.country_name,\n        g.value AS tax_revenue_pct_gdp\n    FROM gfs_observations g\n    JOIN countries c ON g.country_id = c.country_id\n    JOIN sectors s ON g.sector_id = s.sector_id\n    JOIN indicators i ON g.indicator_id = i.indicator_id\n    WHERE c.country_name IN ('Singapore', 'Australia', 'Israel', 'South Africa', 'Chile')\n        AND g.year = 2020\n        AND s.sector_name = 'General government'\n        AND i.indicator_name = 'Taxes, Transactions (cash basis of recording), Cash basis'\n        AND g.transformation = 'Percent of GDP'\n),\nAvg_Tax AS (\n    SELECT AVG(tax_revenue_pct_gdp) AS avg_tax_revenue\n    FROM Tax_Revenue\n)\nSELECT \n    t.country_name,\n    t.tax_revenue_pct_gdp,\n    a.avg_tax_revenue AS group_average,\n    (t.tax_revenue_pct_gdp - a.avg_tax_revenue) AS difference_from_avg\nFROM Tax_Revenue t\nCROSS JOIN Avg_Tax a\nORDER BY t.tax_revenue_pct_gdp DESC",
+      "predicted_sql": "SELECT c.country_name, g.value AS tax_revenue_pct_gdp FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id JOIN sectors s ON g.sector_id = s.sector_id WHERE g.year = 2020 AND c.country_name IN ('Singapore', 'Australia', 'Israel', 'South Africa', 'Chile') AND s.sector_name = 'Taxes' ORDER BY g.value DESC",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "gfs_observations",
+        "countries",
+        "sectors"
+      ]
+    },
+    {
+      "id": 21,
+      "question": "Compare government expenditure between central and local government for Brazil over 2015-2022",
+      "ground_truth_sql": "SELECT g.year,\n       SUM(CASE WHEN s.sector_name = 'Central government including social security' THEN g.value ELSE 0 END) AS central_govt,\n       SUM(CASE WHEN s.sector_name = 'Local Government' THEN g.value ELSE 0 END) AS local_govt,\n       SUM(CASE WHEN s.sector_name = 'Central government including social security' THEN g.value ELSE 0 END) -\n       SUM(CASE WHEN s.sector_name = 'Local Government' THEN g.value ELSE 0 END) AS difference\nFROM gfs_observations g\nJOIN countries c ON g.country_id = c.country_id\nJOIN sectors s ON g.sector_id = s.sector_id\nJOIN indicators i ON g.indicator_id = i.indicator_id\nWHERE c.country_name = 'Brazil'\nAND i.indicator_name = 'Expenditure, Transactions (cash basis of recording), Cash basis'\nAND g.transformation = 'Percent of GDP'\nAND g.year BETWEEN 2015 AND 2022\nGROUP BY g.year\nORDER BY g.year",
+      "predicted_sql": "SELECT g.year, SUM(CASE WHEN s.sector_id = 1 THEN g.value ELSE 0 END) AS central_govt, SUM(CASE WHEN s.sector_id = 2 THEN g.value ELSE 0 END) AS local_govt, SUM(g.value) AS total_govt FROM gfs_observations g JOIN countries c ON g.country_id = c.country_id JOIN sectors s ON g.sector_id = s.sector_id JOIN years y ON g.year = y.year WHERE c.country_name = 'Brazil' AND g.year BETWEEN 2015 AND 2022 GROUP BY g.year ORDER BY g.year",
+      "is_correct": false,
+      "num_candidates": 20,
+      "linked_tables": [
+        "countries",
+        "gfs_observations",
+        "time_periods"
+      ]
+    }
+  ]
+}
