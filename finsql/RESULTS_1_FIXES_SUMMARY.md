@@ -52,7 +52,7 @@ Total cleaned examples: 203
 Reduction: 0 examples (0.0%)
 ```
 
-All ground truth SQLs were already clean! Issue was purely in training input format (skeleton display).
+ Issue was purely in training input format (skeleton display).
 
 ---
 
@@ -144,29 +144,6 @@ Instructions: This query follows a time_series_with_filter pattern. Identify the
 ```sql
 SELECT year, value FROM gem_observations WHERE year BETWEEN 2010 AND 2020  ✅
 ```
-
----
-
-## Training Data Summary
-
-### Before Fixes:
-- **Total examples**: 203
-- **Format**: Skeleton showed placeholders
-- **Issue**: Model learned placeholder syntax
-
-### After Fixes:
-- **Total examples**: 203 (same, all valid)
-- **Format**: Pattern type only, no placeholders
-- **Quality**: 100% executable SQLs
-
-### Breakdown by Plugin:
-
-| Plugin | Examples | Changes |
-|--------|----------|---------|
-| cot_specialist | 70 | ✓ No changes (no placeholders in CoT) |
-| robustness_specialist | 49 | ✓ No changes (synonyms don't affect SQL) |
-| structure_specialist | 70 | ✅ **FIXED** (removed skeleton display) |
-| hard_cases_specialist | 14 | ✓ No changes (curated examples) |
 
 ---
 

@@ -413,7 +413,6 @@ FinSQL achieved **47.6% accuracy** on 21-query economic dataset using Llama-3.1-
 3. **Component Analysis**: Output calibration critical (+28.6%), but must be carefully designed
 4. **Reusable Framework**: Ready for larger model testing
 
-### Recommendations for Paper
 
 **What to emphasize**:
 - FinSQL's three-component architecture
@@ -426,17 +425,10 @@ FinSQL achieved **47.6% accuracy** on 21-query economic dataset using Llama-3.1-
 - Fine-tuning requires careful data curation
 - Prompting-based approaches (MAGIC) may be more practical
 
-**Future work framing**:
-- Larger models (70B) expected to improve
-- Alternative: Hybrid approach (schema linking + prompting)
-- Economic datasets need domain-specific training data
 
-### Final Assessment
+### Takeaways
 
 FinSQL demonstrates that **component integration** (schema linking + fine-tuning + calibration) can match strong baselines, but **training data quality and model size** are critical bottlenecks. The framework is sound; scaling requires either larger models or substantially more training examples.
 
 ---
 
-**Status**: Phase 1 Complete
-**Next**: Model comparison (Llama-3.1-70B, Llama-3.3-70B) or Hybrid MAGIC+FinSQL approach
-**For Paper**: Sections 3-7, 10-11 ready for integration

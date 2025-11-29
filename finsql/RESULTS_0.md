@@ -228,16 +228,6 @@ r'JOIN\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(?!ON)'
 - **Full Evaluation**: $0.0352 (21 queries)
 - **Tokens per Query**: ~9,318 average
 
-### Cost Comparison
-
-| Framework | Cost per Query | Full Eval Cost |
-|-----------|---------------|----------------|
-| FinSQL | $0.00168 | $0.0352 |
-| MAGIC | $0.00XX | $0.0XXX |
-| LoRA-only | $0.00060 | $0.0126 |
-
-**Note**: FinSQL is ~3× more expensive than LoRA-only due to ensemble approach, but still very affordable.
-
 ---
 
 ## Files and Code Structure
@@ -351,45 +341,6 @@ def generate_sql(question, num_candidates=5):
 
 ---
 
-## Recommendations
-
-### For This Dataset
-
-**Don't pursue further FinSQL improvements:**
-- Re-training would take weeks
-- Uncertain improvement (placeholder issue may persist)
-- Already close to MAGIC baseline
-
-**Better alternatives:**
-1. **DIN-SQL**: Decompose queries, proven 60-85% accuracy
-2. **Hybrid approach**: FinSQL schema linking + MAGIC prompting
-3. **C3**: Simpler than DIN-SQL, effective column filtering
-
-### For Future Work
-
-**If using FinSQL on different datasets:**
-
-1. **Start with embeddings** for schema linking
-   - Only use Cross-Encoder if >50 tables or >500 columns
-   - SentenceTransformer is fast and effective
-
-2. **Test calibration functions independently**
-   - Disable all functions initially
-   - Add one at a time and verify improvement
-   - Remove any that hurt performance
-
-3. **Invest in training data quality**
-   - Ensure no placeholders in examples
-   - Include complex multi-table joins
-   - Validate examples are executable
-
-4. **Use ensemble strategically**
-   - More candidates = higher cost
-   - Self-consistency helps but has diminishing returns
-   - 3-5 rounds × 4 plugins = 12-20 candidates is sufficient
-
----
-
 ## Conclusion
 
 FinSQL implementation achieved **47.6% accuracy**, competitive with the MAGIC baseline (52.4%). The framework successfully integrated:
@@ -403,7 +354,7 @@ The main limitation is **LoRA training quality**, causing:
 - Unreplaced placeholders
 - Missing complex JOINs
 
-**Verdict**: FinSQL is a solid approach but requires high-quality training data and careful calibration design. For better results, consider DIN-SQL or hybrid approaches that don't rely on fine-tuning.
+**Verdict**: FinSQL is a solid approach but requires high-quality training data and careful calibration design.
 
 ---
 
