@@ -2,14 +2,16 @@
 
 ## Overview
 
-This database integrates two major financial datasets for text-to-sql benchmarking:
+This database integrates two major financial datasets for text-to-SQL benchmarking:
 
-1. **IMF Government Finance Statistics (GFS)**: Government financial indicators across sectors, countries, and time periods (1972-2024)
-2. **World Bank Global Economic Monitor (GEM)**: 35 economic indicators including GDP, CPI, exchange rates, and trade metrics
+1. **IMF Government Finance Statistics (GFS)**: Government financial indicators (revenue, expenditure, debt) across sectors, countries, and time periods
+2. **World Bank Global Economic Monitor (GEM)**: Macroeconomic indicators (GDP, CPI, unemployment, exchange rates, trade metrics)
 
-**Database Type**: SQLite (single-file relational database)  
-**Primary Use**: Text-to-SQL benchmarking with real-world financial data  
+**Database Type**: SQLite (single-file relational database)
+**Database Size**: 75 MB
+**Primary Use**: Text-to-SQL benchmarking with real-world financial data
 **Domain**: Government finance and macroeconomic statistics
+**Time Coverage**: 1972-2024 (53 years)
 
 ---
 
@@ -21,7 +23,7 @@ The database follows a normalized relational structure with 6 core tables:
 
 **1. countries**
 - `country_id` (PK), `country_name`, `region`
-- ~150-200 unique countries and economic regions
+- 271 countries and economic regions
 
 **2. time_periods**
 - `year` (PK)
@@ -29,25 +31,26 @@ The database follows a normalized relational structure with 6 core tables:
 
 **3. sectors**
 - `sector_id` (PK), `sector_name`, `sector_description`
-- ~20-30 government sectors (e.g., "Central government", "Social security funds")
+- 8 government sectors (e.g., "General government", "Central government", "Social security funds")
 
 **4. indicators**
 - `indicator_id` (PK), `indicator_code`, `indicator_name`, `source`, `unit`, `description`
-- 1000+ indicators total (split between GFS and GEM sources)
+- 102,468 indicator records (see note below on denormalization)
+- ~70 unique indicator types (35 GFS + 35 GEM)
 
 ### Observation Tables
 
 **5. gfs_observations**
 - `observation_id` (PK), `country_id` (FK), `year` (FK), `sector_id` (FK), `indicator_id` (FK)
 - `value`, `transformation`, `scale`, `frequency`
-- Millions of observations
+- 625,695 observations
 - Rich metadata including transformation types and scale factors
 
 **6. gem_observations**
 - `observation_id` (PK), `country_id` (FK), `year` (FK), `indicator_id` (FK)
 - `value`, `seasonal_adjustment`
-- Hundreds of thousands of observations
-- Includes seasonal adjustment indicators
+- 85,039 observations
+- Includes seasonal adjustment indicators (boolean)
 
 ### Entity-Relationship Structure
 
@@ -116,15 +119,18 @@ sectors ─────────────┘
 ## Dataset Statistics
 
 ### Size Metrics
-- **Total observations**: ~1-3 million records (combined GFS + GEM)
-- **Unique countries**: 150-200
-- **Indicators**: 1000+ unique indicators
-- **Years covered**: 1972-2024
-- **Database file size**: ~50-200 MB (varies by data completeness)
+- **Total rows**: 813,534 (across all tables)
+- **Observation records**: 710,734 (625,695 GFS + 85,039 GEM)
+- **Countries**: 271
+- **Government sectors**: 8
+- **Indicator records**: 102,468 (denormalized)
+- **Unique indicator types**: ~70 (35 GFS + 35 GEM)
+- **Years covered**: 1972-2024 (53 years)
+- **Database file size**: 75 MB
 
 ### Coverage Distribution
-- **GFS data**: Government finance statistics with sector breakdowns
-- **GEM data**: 35 economic indicator types across countries
+- **GFS data**: Government finance statistics with sector breakdowns (625,695 observations)
+- **GEM data**: 35 macroeconomic indicator types (85,039 observations)
 - **Temporal coverage**: Varies by indicator (older indicators have sparser data)
 
 
@@ -148,6 +154,20 @@ sectors ─────────────┘
 - Created unified indicator taxonomy
 - Established foreign key relationships
 - Added performance indexes for query optimization
+
+### Note on Indicator Denormalization
+
+The `indicators` table contains 102,468 records due to **denormalization of GFS data**:
+
+- **GFS source format**: Each indicator in the original IMF GFS dataset embeds country codes in the indicator code (e.g., `HKG.S13.G1.G1_TCB_CAB.XDC.A` for Hong Kong revenue)
+- **Database implementation**: Country-indicator combinations are stored as separate rows (194 countries × ~528 indicator types = 102,433 GFS records)
+- **Actual indicator types**: Only ~70 unique indicator concepts exist (35 GFS types + 35 GEM types)
+
+**Example**: The indicator "Revenue, Transactions (cash basis)" appears 3,104 times in the `indicators` table - once for each country-sector combination.
+
+**Impact on queries**: This denormalization does not affect query correctness. Queries filter by `indicator_name` (which correctly handles duplicates) and join with `country_id` to retrieve the appropriate data.
+
+**Impact on benchmarks**: The schema representation sent to models contains only table structure (888 characters), not the 102K rows, so this does not affect text-to-SQL model performance.
 
 ---
 

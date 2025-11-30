@@ -37,11 +37,15 @@ We evaluated **two approaches** across multiple models:
 | Model | Parameters | Zero-Shot Accuracy | Execution Errors |
 |-------|-----------|-------------------|------------------|
 | **openai/gpt-oss-20b** | 20B | **12/21 (57.1%)** | 2 |
+| **meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo** | 70B | **10/21 (47.6%)** | 1 |
 | mistralai/Mistral-7B-Instruct-v0.3 | 7B | 10/21 (47.6%) | 3 |
 | Qwen/Qwen2.5-7B-Instruct-Turbo | 7B | 9/21 (42.9%) | 3 |
 | meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo | 8B | 8/21 (38.1%) | 3 |
 
-**Surprising:** 20B GPT-OSS is best out-of-the-box, Llama 8B is worst!
+**Key Findings:**
+- GPT-OSS 20B remains best out-of-the-box (57.1%)
+- Llama 70B significantly better than 8B (+9.5pp) but still below GPT-OSS
+- Model size helps for zero-shot: 70B > 20B > 8B within families
 
 ---
 
@@ -49,15 +53,18 @@ We evaluated **two approaches** across multiple models:
 
 | Model | Zero-Shot | Best Method | Best Accuracy | Improvement | Winner? |
 |-------|-----------|-------------|---------------|-------------|---------|
-| **Llama 3.1 8B** | 38.1% | **Smart MAGIC + Guidelines** | **57.1%** | **+19.0pp** | ✓ TIED |
-| **GPT-OSS 20B** | **57.1%** | Zero-Shot | **57.1%** | **0.0pp** | ✓ TIED |
+| **GPT-OSS 20B** | **57.1%** | Zero-Shot | **57.1%** | **0.0pp** | ✓ TIED #1 |
+| **Llama 3.1 8B** | 38.1% | **Smart MAGIC + Guidelines** | **57.1%** | **+19.0pp** | ✓ TIED #1 |
+| **Llama 3.1 70B** | 47.6% | **Smart MAGIC/+Guidelines/+Retry** | **57.1%** | **+9.5pp** | ✓ TIED #1 |
 | Mistral 7B | 47.6% | Zero-Shot / + Guidelines | 47.6% | 0.0pp | |
 | Qwen 2.5 7B | 42.9% | Zero-Shot / + Guidelines | 42.9% | 0.0pp | |
 
-**Critical Insight:**
-- **Llama 8B:** Techniques essential (+19pp)
+**Critical Insights:**
+- **Three models tie at 57.1%** with different approaches
+- **Llama 8B:** Techniques essential (+19.0pp improvement)
+- **Llama 70B:** Techniques helpful (+9.5pp improvement)
 - **GPT-OSS 20B:** Techniques harmful (best = zero-shot)
-- **Mistral/Qwen:** Techniques irrelevant (no change)
+- **Mistral/Qwen:** Techniques irrelevant (0pp change)
 
 ---
 
@@ -134,7 +141,39 @@ We evaluated **two approaches** across multiple models:
 
 ## Model-Specific Insights
 
-### 1. meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo ✓ BEST WITH TECHNIQUES
+### 1. meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo ✓ BEST OVERALL REASONING
+
+**Performance Progression:**
+- Zero-Shot: 10/21 (47.6%) ← Better than 8B (+9.5pp)
+- Smart MAGIC: **12/21 (57.1%)** [+9.5pp from zero-shot]
+- + Guidelines: **12/21 (57.1%)** [+9.5pp] ← Tied best
+- + Retry: **12/21 (57.1%)** [+9.5pp] ← Most robust
+
+**Strengths:**
+- ✓ **Best zero-shot among Llama family** (47.6% vs 38.1% for 8B)
+- ✓ **Consistent 57.1% across all techniques** (Smart MAGIC, +Guidelines, +Retry)
+- ✓ **Most robust to technique choice** - All three methods achieve 57.1%
+- ✓ **Superior reasoning** - Fixed Query #6 that 8B missed
+- ✓ **Fewer execution errors** (1 vs 3 for 8B in zero-shot)
+
+**Weaknesses:**
+- ✗ **4× more expensive than 8B** (~$0.008 vs ~$0.002 per query)
+- ✗ **No improvement over 8B with guidelines** (both 57.1%)
+- ✗ **Still below GPT-OSS 20B zero-shot** (47.6% vs 57.1%)
+- ✗ **Fine-tuning underperforms 8B** (FinSQL: 42.9% vs 47.6%)
+
+**Best Configuration:** Smart MAGIC, +Guidelines, or +Retry (all 57.1%)
+
+**Cost-Benefit Analysis:**
+- **vs 8B Zero-Shot:** Worth 4× cost for +9.5pp (47.6% vs 38.1%)
+- **vs 8B Smart MAGIC:** Worth 4× cost for +4.7pp (57.1% vs 52.4%)
+- **vs 8B +Guidelines:** NOT worth 4× cost for 0pp (both 57.1%)
+
+**Recommendation:** Use 70B for zero-shot or Smart MAGIC. Switch to 8B when using guidelines.
+
+---
+
+### 2. meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo ✓ BEST WITH TECHNIQUES
 
 **Performance Progression:**
 - Zero-Shot: 8/21 (38.1%) ← Worst baseline
@@ -299,37 +338,51 @@ We evaluated **two approaches** across multiple models:
 
 | Model | Parameters | Best Accuracy | Accuracy per Billion Params |
 |-------|-----------|---------------|------------------------------|
-| Llama 3.1 8B | 8B | **57.1%** | **7.14%/B** |
+| Llama 3.1 8B | 8B | **57.1%** | **7.14%/B** ✓ Most efficient |
+| Llama 3.1 70B | 70B | **57.1%** | **0.82%/B** |
 | Mistral 7B | 7B | 47.6% | 6.80%/B |
 | Qwen 2.5 7B | 7B | 42.9% | 6.13%/B |
-| GPT-OSS 20B | 20B | 52.4% | 2.62%/B |
+| GPT-OSS 20B | 20B | 57.1% | 2.86%/B |
 
-**Surprising Finding:**
-- ✗ **20B model is LEAST efficient** (2.62%/B)
-- ✓ **8B Llama is MOST efficient** (7.14%/B)
-- ➖ Parameter count ≠ performance for Text-to-SQL
+**Key Findings:**
+- ✓ **8B Llama is MOST parameter-efficient** (7.14%/B)
+- ✗ **70B Llama is LEAST parameter-efficient** (0.82%/B) despite same 57.1% accuracy
+- ➖ **Diminishing returns after 8B** - 8.75× more params yields 0pp improvement with guidelines
+- ✓ **Parameter count helps zero-shot** - 70B (+9.5pp) and 20B (+19.0pp) better than 8B baseline
 
-**Why?** Instruction tuning quality > raw parameters. Llama 3.1's superior instruction following enables better guideline utilization.
+**Why?**
+- **With techniques:** Instruction tuning quality > raw parameters
+- **Without techniques:** Raw parameters help significantly
+- **Guidelines saturate performance** at 57.1% regardless of model size (8B, 20B, or 70B)
 
 ---
 
 ## Recommendations
 
-### For Maximum Accuracy (Tied at 57.1%)
+### For Maximum Accuracy (Three Options at 57.1%)
 
-**Option 1: Llama 3.1 8B + Smart MAGIC + Guidelines**
+**Option 1: Llama 3.1 8B + Smart MAGIC + Guidelines** ✓ BEST VALUE
 - Accuracy: 57.1%
-- Cost: $0.18/M tokens (8B params)
+- Cost: ~$0.002/query (lowest)
 - **Requires:** Complex prompt engineering
-- **Best for:** When you can invest in technique development
+- **Best for:** Cost-sensitive, can invest in technique development
+- **Advantage:** 4× cheaper than 70B, 10× cheaper than GPT-OSS
 
-**Option 2: GPT-OSS 20B + Zero-Shot**
+**Option 2: Llama 3.1 70B + Smart MAGIC (or +Guidelines or +Retry)**
 - Accuracy: 57.1%
-- Cost: $0.45/M tokens (20B params) - **2.5× more expensive**
-- **Requires:** Simple prompting only
-- **Best for:** When you want plug-and-play solution
+- Cost: ~$0.008/query (4× more than 8B)
+- **Requires:** Moderate prompt engineering
+- **Best for:** Want robustness to technique choice
+- **Advantage:** Consistent 57.1% across all three techniques
 
-**Recommendation:** **Use Llama** - same accuracy, 60% cost savings
+**Option 3: GPT-OSS 20B + Zero-Shot**
+- Accuracy: 57.1%
+- Cost: ~$0.020/query (10× more than 8B)
+- **Requires:** Simple prompting only
+- **Best for:** Plug-and-play, no engineering overhead
+- **Advantage:** No technique development needed
+
+**Recommendation:** **Use Llama 8B + Guidelines** - best cost-performance ratio
 
 ---
 
@@ -380,11 +433,31 @@ We evaluated **two approaches** across multiple models:
 
 ## Future Work
 
-### 1. Test Larger Llama Variant
-**Model:** meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
-- **Hypothesis:** Superior instruction following + more parameters = 65%+ accuracy
-- **Expected:** +8-10pp over Llama 8B
-- **Cost:** 8.75× more expensive ($0.88 vs $0.18 per M tokens)
+### 1. Llama 70B Results ✅ COMPLETED
+
+**Model:** meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo (70B params)
+
+**MAGIC Results (Prompting):**
+
+| Method | Llama 8B | Llama 70B | Change | Winner |
+|--------|----------|-----------|--------|--------|
+| Zero-Shot | 38.1% (8/21) | **47.6%** (10/21) | **+9.5pp** | 70B ✓ |
+| Smart MAGIC | 52.4% (11/21) | **57.1%** (12/21) | **+4.7pp** | 70B ✓ |
+| + Guidelines | **57.1%** (12/21) | **57.1%** (12/21) | **0.0pp** | Tie |
+| + Retry | 47.6% (10/21) | **57.1%** (12/21) | **+9.5pp** | 70B ✓ |
+
+**Key Findings:**
+- ✓ **70B excels at prompting** - Wins on 3/4 methods, ties on 1
+- ✓ **Zero-shot improvement: +9.5pp** (47.6% vs 38.1%)
+- ✓ **Smart MAGIC improvement: +4.7pp** (57.1% vs 52.4%)
+- ✓ **Guidelines saturate performance** - Both models reach 57.1%
+- ✓ **Retry more robust on 70B** - Maintains 57.1% vs 8B's 47.6%
+
+**Cost:** 4× more expensive per query (~$0.008 vs ~$0.002 for 8B)
+
+**Recommendation:**
+- **Use 70B for zero-shot/Smart MAGIC** - Worth 4× cost for +4.7pp to +9.5pp improvement
+- **Use either model for Guidelines** - Same 57.1% accuracy, so 8B is 4× cheaper
 
 ### 2. Test Qwen Larger Variants
 **Model:** Qwen/Qwen2.5-32B-Instruct-Turbo
@@ -531,7 +604,22 @@ Before zero-shot testing, we thought:
 
 ## Appendix: Individual Model Reports
 
-### A. Llama 3.1 8B Results
+### A. Llama 3.1 70B Results
+
+| Method | Accuracy | Change from Zero-Shot |
+|--------|----------|----------------------|
+| **Zero-Shot** | **10/21 (47.6%)** | Baseline |
+| Smart MAGIC | **12/21 (57.1%)** | **+9.5pp ✓** |
+| + Guidelines | **12/21 (57.1%)** | **+9.5pp ✓** |
+| + Retry | **12/21 (57.1%)** | **+9.5pp ✓** |
+
+**Queries Fixed vs 8B Zero-Shot:** #1, #6 (+2 queries)
+**Best Improvement:** +9.5pp from zero-shot (all three techniques)
+**Robustness:** All techniques achieve same 57.1% accuracy
+
+---
+
+### B. Llama 3.1 8B Results
 
 | Method | Accuracy | Change from Zero-Shot |
 |--------|----------|----------------------|

@@ -383,4 +383,98 @@ Key contributions:
 
 ---
 
+## Multi-Model Comparison: Llama 8B vs 70B
+
+**Date Added:** November 30, 2025
+
+To validate our ablation study findings, we evaluated **Llama 3.1 70B** (8.75× larger model) across all methods.
+
+### Results Summary
+
+| Method | Llama 8B | Llama 70B | Change | Winner |
+|--------|----------|-----------|--------|--------|
+| **Zero-Shot** | 38.1% (8/21) | **47.6%** (10/21) | **+9.5pp** | 70B ✓ |
+| **Smart MAGIC** | 52.4% (11/21) | **57.1%** (12/21) | **+4.7pp** | 70B ✓ |
+| **+ Guidelines** | **57.1%** (12/21) | **57.1%** (12/21) | **0.0pp** | Tie |
+| **+ Retry** | 47.6% (10/21) | **57.1%** (12/21) | **+9.5pp** | 70B ✓ |
+| **FinSQL (fine-tuned)** | **47.6%** (10/21) | 42.9% (9/21) | **-4.7pp** | 8B ✓ |
+
+### Key Findings
+
+**1. Prompting Methods Favor Larger Models**
+- ✓ **70B wins on 3/4 prompting methods** (Zero-Shot, Smart MAGIC, Retry)
+- ✓ **Guidelines saturate at 57.1%** - Both models reach same peak
+- ✓ **Retry more robust on 70B** - Maintains 57.1% vs 8B's 47.6% regression
+
+**2. Fine-Tuning Favors Smaller Models with Limited Data**
+- ✗ **70B underperforms on FinSQL** (42.9% vs 47.6%)
+- **Root cause:** 203 examples = 3 examples/billion params for 70B (insufficient)
+- **Evidence:** 70B hallucinated columns, wrong datasets on queries #10, #13
+
+**3. Model Size Has Diminishing Returns with Techniques**
+- **Zero-shot:** 70B +9.5pp better (larger model helps)
+- **Smart MAGIC:** 70B +4.7pp better (techniques reduce gap)
+- **Guidelines:** 70B +0.0pp (techniques equalize performance)
+
+**4. Cost-Benefit Analysis**
+
+| Scenario | Best Model | Justification |
+|----------|-----------|---------------|
+| **Zero-shot** | 70B | +9.5pp worth 4× cost |
+| **Smart MAGIC** | 70B | +4.7pp worth 4× cost |
+| **Guidelines** | 8B | Same 57.1%, 8B is 4× cheaper |
+| **Fine-tuning** | 8B | Better accuracy + lower cost |
+
+### Validation of Ablation Study Insights
+
+**Insight #1 Validated:** Smart schema presentation works across model sizes
+- Both 8B and 70B maintain baseline with smart schema
+- Confirms schema presentation > schema filtering
+
+**Insight #2 Validated:** Guidelines are model-agnostic
+- Both models reach 57.1% with guidelines
+- Confirms targeted prompts work regardless of model size
+
+**Insight #3 Validated:** Execution retry has limited scope
+- 70B also sees minimal retry usage (1-2 queries)
+- Confirms most errors are semantic, not syntactic
+
+**Insight #4 Validated:** Prompt engineering effectiveness varies by baseline
+- 8B: +19.0pp improvement (weak baseline → large gain)
+- 70B: +9.5pp improvement (stronger baseline → smaller gain)
+- Confirms: Weaker baselines benefit more from techniques
+
+### Updated Recommendations
+
+**Production Use:**
+
+**For Maximum Accuracy (57.1%):**
+- **Budget-conscious:** Llama 8B + Guidelines (~$0.002/query)
+- **Technique-flexible:** Llama 70B + Smart MAGIC/Guidelines/Retry (~$0.008/query)
+- **Zero-engineering:** GPT-OSS 20B zero-shot (~$0.020/query)
+
+**For Zero-Shot:**
+- **Best choice:** Llama 70B (47.6%, 4× cost of 8B but +9.5pp)
+- **Budget alternative:** Mistral 7B (47.6%, cheaper, same accuracy)
+
+**For Fine-Tuning:**
+- **Best choice:** Llama 8B (47.6% with 203 examples)
+- **Avoid:** Llama 70B (42.9%, worse despite larger size)
+- **To use 70B:** Collect 500-1000 training examples first
+
+### Research Insights
+
+**When Does Model Size Help?**
+
+| Task | 8B → 70B Benefit | Explanation |
+|------|------------------|-------------|
+| **Zero-shot prompting** | **+9.5pp** | Raw reasoning ability matters |
+| **Smart schema linking** | **+4.7pp** | Better understanding of context |
+| **Guidelines** | **0.0pp** | Explicit patterns equalize models |
+| **Fine-tuning (203 ex)** | **-4.7pp** | Insufficient data for large model |
+
+**Key Lesson:** **Larger models excel at implicit reasoning** (zero-shot, schema linking) but **techniques level the playing field** (guidelines make 8B = 70B).
+
+---
+
 **End of Report**
