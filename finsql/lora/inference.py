@@ -24,24 +24,46 @@ from finsql.config import (
 class LoRAInference:
     """Generate SQL using fine-tuned LoRA plugins"""
 
-    def __init__(self):
+    def __init__(self, model_suffix: str = None):
+        """
+        Initialize LoRA inference.
+
+        Args:
+            model_suffix: Optional suffix for model-specific registry (e.g., "llama70b")
+                         If None, uses default plugin_registry.json
+        """
         self.client = Together(api_key=TOGETHER_API_KEY)
         self.cost_tracker = CostTracker()
         self.schema = format_schema(DB_PATH)
+        self.model_suffix = model_suffix
 
         # Load plugin registry
-        self.plugins = self._load_plugin_registry()
+        self.plugins = self._load_plugin_registry(model_suffix)
 
-        print(f"✓ Loaded {len(self.plugins)} LoRA plugins:")
+        print(f"✓ Loaded {len(self.plugins)} LoRA plugins{f' ({model_suffix})' if model_suffix else ''}:")
         for name in self.plugins.keys():
             print(f"  - {name}")
 
-    def _load_plugin_registry(self) -> Dict[str, str]:
-        """Load plugin model IDs from registry"""
-        if not PLUGIN_REGISTRY_PATH.exists():
-            raise FileNotFoundError(f"Plugin registry not found: {PLUGIN_REGISTRY_PATH}")
+    def _load_plugin_registry(self, model_suffix: str = None) -> Dict[str, str]:
+        """
+        Load plugin model IDs from registry.
 
-        with open(PLUGIN_REGISTRY_PATH, 'r') as f:
+        Args:
+            model_suffix: Optional suffix for model-specific registry
+
+        Returns:
+            Dict mapping plugin names to model IDs
+        """
+        # Determine registry path
+        if model_suffix:
+            registry_path = PLUGIN_REGISTRY_PATH.parent / f"plugin_registry_{model_suffix}.json"
+        else:
+            registry_path = PLUGIN_REGISTRY_PATH
+
+        if not registry_path.exists():
+            raise FileNotFoundError(f"Plugin registry not found: {registry_path}")
+
+        with open(registry_path, 'r') as f:
             return json.load(f)
 
     # =====================

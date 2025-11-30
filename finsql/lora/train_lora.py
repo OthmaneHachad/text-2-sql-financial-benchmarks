@@ -24,10 +24,10 @@ from finsql.config import (
 class LoRATrainer:
     """Manage TogetherAI LoRA fine-tuning"""
 
-    def __init__(self):
+    def __init__(self, base_model: str = "meta-llama/Meta-Llama-3.1-8B-Instruct-Reference"):
         self.client = Together(api_key=TOGETHER_API_KEY)
         self.training_dir = REPO_ROOT / "data" / "finsql" / "training_data"
-        self.base_model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Reference"
+        self.base_model = base_model
 
         # Training files mapping
         self.training_files = {
@@ -194,19 +194,26 @@ class LoRATrainer:
     # Plugin Registry
     # =====================
 
-    def save_plugin_registry(self, registry: Dict[str, str]):
+    def save_plugin_registry(self, registry: Dict[str, str], model_suffix: str = None):
         """
         Save plugin adapter IDs to registry file
 
         Args:
             registry: Dict mapping plugin names to adapter IDs
+            model_suffix: Optional suffix for model-specific registry (e.g., "llama70b")
         """
         PLUGIN_REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(PLUGIN_REGISTRY_PATH, 'w') as f:
+        # Create model-specific registry path if suffix provided
+        if model_suffix:
+            registry_path = PLUGIN_REGISTRY_PATH.parent / f"plugin_registry_{model_suffix}.json"
+        else:
+            registry_path = PLUGIN_REGISTRY_PATH
+
+        with open(registry_path, 'w') as f:
             json.dump(registry, f, indent=2)
 
-        print(f"\n✓ Plugin registry saved to: {PLUGIN_REGISTRY_PATH}")
+        print(f"\n✓ Plugin registry saved to: {registry_path}")
 
     def load_plugin_registry(self) -> Dict[str, str]:
         """Load plugin registry if exists"""
@@ -222,7 +229,8 @@ class LoRATrainer:
     def train_all_plugins(
         self,
         wait_for_completion: bool = True,
-        auto_save: bool = True
+        auto_save: bool = True,
+        model_suffix: str = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Upload data and launch training for all 4 plugins
@@ -307,7 +315,7 @@ class LoRATrainer:
 
             # Save plugin registry
             if auto_save and plugin_registry:
-                self.save_plugin_registry(plugin_registry)
+                self.save_plugin_registry(plugin_registry, model_suffix=model_suffix)
 
         else:
             print("\n⚠️  Jobs launched but not waiting for completion.")
@@ -369,6 +377,17 @@ def main():
 
     parser = argparse.ArgumentParser(description="Fine-tune FinSQL LoRA plugins")
     parser.add_argument(
+        "--model",
+        type=str,
+        default="meta-llama/Meta-Llama-3.1-8B-Instruct-Reference",
+        help="Base model for fine-tuning (must be -Reference variant)"
+    )
+    parser.add_argument(
+        "--model-suffix",
+        type=str,
+        help="Suffix for plugin registry file (e.g., 'llama70b')"
+    )
+    parser.add_argument(
         "--no-wait",
         action="store_true",
         help="Launch jobs but don't wait for completion"
@@ -381,7 +400,7 @@ def main():
 
     args = parser.parse_args()
 
-    trainer = LoRATrainer()
+    trainer = LoRATrainer(base_model=args.model)
 
     if args.check_status:
         # Check status of specific jobs
@@ -391,7 +410,8 @@ def main():
         # Launch new training
         results = trainer.train_all_plugins(
             wait_for_completion=not args.no_wait,
-            auto_save=True
+            auto_save=True,
+            model_suffix=args.model_suffix
         )
 
         print("\n" + "="*80)

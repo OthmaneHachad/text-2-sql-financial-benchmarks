@@ -1,0 +1,6 @@
+{
+  "cot_specialist": "othmanehachad_a13c/Meta-Llama-3.1-70B-Instruct-Reference-cot_specialist-c390eb52",
+  "robustness_specialist": "othmanehachad_a13c/Meta-Llama-3.1-70B-Instruct-Reference-robustness_specialist-2139c9d2",
+  "structure_specialist": "othmanehachad_a13c/Meta-Llama-3.1-70B-Instruct-Reference-structure_specialist-e04748cd",
+  "hard_cases_specialist": "othmanehachad_a13c/Meta-Llama-3.1-70B-Instruct-Reference-hard_cases_specialist-de993111"
+}

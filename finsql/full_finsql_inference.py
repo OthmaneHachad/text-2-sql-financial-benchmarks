@@ -32,17 +32,25 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 class FullFinSQLInference:
     """Complete FinSQL inference pipeline"""
 
-    def __init__(self):
+    def __init__(self, model_suffix: str = None):
+        """
+        Initialize full FinSQL pipeline.
+
+        Args:
+            model_suffix: Optional suffix for model-specific LoRA plugins (e.g., "llama70b")
+        """
         print("="*80)
-        print("INITIALIZING FULL FINSQL PIPELINE")
+        print(f"INITIALIZING FULL FINSQL PIPELINE{f' ({model_suffix})' if model_suffix else ''}")
         print("="*80)
+
+        self.model_suffix = model_suffix
 
         # Initialize components
         print("\n[1/3] Loading Schema Linker...")
         self.schema_linker = EmbeddingSchemaLinker(db_path=str(DB_PATH))
 
         print("\n[2/3] Loading LoRA Models...")
-        self.lora_inference = LoRAInference()
+        self.lora_inference = LoRAInference(model_suffix=model_suffix)
 
         print("\n[3/3] Loading Output Calibrator...")
         self.calibrator = OutputCalibrator(db_path=str(DB_PATH))
@@ -188,6 +196,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Full FinSQL Inference')
+    parser.add_argument('--model-suffix', type=str, default=None,
+                        help='Model suffix for LoRA plugins (e.g., "llama70b")')
     parser.add_argument('--num-queries', type=int, default=None,
                         help='Number of queries to evaluate (default: all)')
     parser.add_argument('--output', type=str, default=None,
@@ -196,7 +206,7 @@ def main():
     args = parser.parse_args()
 
     # Initialize pipeline
-    pipeline = FullFinSQLInference()
+    pipeline = FullFinSQLInference(model_suffix=args.model_suffix)
 
     # Run evaluation
     eval_results = pipeline.evaluate(num_queries=args.num_queries)
