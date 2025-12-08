@@ -93,7 +93,8 @@ class EnhancedMAGIC:
                 "You can set it with: export TOGETHER_API_KEY='your-api-key'"
             )
 
-        self.client = Together(api_key=API_KEY)
+        # Initialize client with 180 second timeout
+        self.client = Together(api_key=API_KEY, timeout=180.0)
         self.model_name = MODEL_NAME
 
         # Get full schema for reference

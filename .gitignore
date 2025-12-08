@@ -59,6 +59,20 @@ results/*.txt
 data/guideline_*.txt
 data/final_guideline.txt
 
+# All result JSON files in data/results subdirectories
+data/results/**/*.json
+data/results/**/*.csv
+data/results/**/*.txt
+
+# All report markdown files in data/
+data/*_REPORT.md
+data/*_RESULTS.md
+data/*_ANALYSIS.md
+data/*_analysis.md
+data/ABLATION_STUDY_RESULTS.md
+data/MODEL_COMPARISON_REPORT.md
+data/ENHANCED_MAGIC_FINAL_REPORT.md
+
 # Personal/temporary files
 PRE_PHASE_0_CHECKLIST.md
 MAGIC_IMPLEMENTATION_PLAN.md
@@ -68,13 +82,15 @@ COMMIT_MAGIC.sh
 GIT_COMMANDS.sh
 COMMIT_INSTRUCTIONS.md
 verify_commit.sh
-Text2SQL-Questions.csv
 CLAUDE.md
 PROJECT_STATUS.md
 RESTRUCTURE_SUMMARY.md
+PAPER_OUTLINE.md
+METHODOLOGY_SECTION_STRUCTURE.md
 
 # Old structure (to be removed after migration)
 magic_implementation/
+alpha_sql/
 
 # Documentation (personal notes)
 docs/

@@ -45,6 +45,9 @@ def evaluate_all_methods(model_name: str, test_file: str = None):
 
     # Import methods dynamically to use specified model
     methods_to_test = [
+        ("Zero-shot", "zero_shot_baseline", "ZeroShotBaseline"),
+        ("MAGIC Baseline", "magic_baseline_inference", "MAGICBaseline"),
+        ("Enhanced MAGIC", "enhanced_inference", "EnhancedMAGIC"),
         ("Smart MAGIC", "smart_inference", "SmartMAGIC"),
         ("Smart MAGIC + Guidelines", "smart_inference_guidelines", "SmartMAGICWithGuidelines"),
         ("Smart MAGIC + Retry", "smart_inference_retry", "SmartMAGICWithRetry"),
@@ -63,6 +66,8 @@ def evaluate_all_methods(model_name: str, test_file: str = None):
             # Create instance
             if "Retry" in class_name:
                 method = method_class(max_retries=2, verbose=False)
+            elif "EnhancedMAGIC" in class_name:
+                method = method_class(num_samples=10, use_full_guideline=False, verbose=False)
             else:
                 method = method_class(verbose=False)
 
@@ -187,27 +192,6 @@ def generate_model_report(results: dict) -> str:
             errors = method_results["execution_errors"]
             report += f"| {method_name} | {correct}/{total} ({acc:.1f}%) | {errors} | |\n"
 
-    report += "\n## Comparison with Llama 3.1 8B\n\n"
-    report += "| Method | Llama 3.1 8B | " + model_name.split("/")[-1] + " | Difference |\n"
-    report += "|--------|--------------|" + "-" * len(model_name.split("/")[-1]) + "-|------------|\n"
-
-    baseline = {
-        "Smart MAGIC": 52.4,
-        "Smart MAGIC + Guidelines": 57.1,
-        "Smart MAGIC + Retry": 47.6,
-    }
-
-    for method_name, method_results in results["methods"].items():
-        if "error" not in method_results and method_name in baseline:
-            acc = method_results["accuracy"]
-            base_acc = baseline[method_name]
-            diff = acc - base_acc
-            diff_str = f"{diff:+.1f}pp" if diff != 0 else "0.0pp"
-            report += f"| {method_name} | {base_acc:.1f}% | {acc:.1f}% | {diff_str} |\n"
-
-    report += "\n## FinSQL Results\n\n"
-    report += "*To be evaluated*\n\n"
-
     return report
 
 
@@ -216,10 +200,6 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Usage: python evaluate_all_methods.py <model_name>")
-        print("\nAvailable models:")
-        print("  - Qwen/Qwen2.5-7B-Instruct-Turbo")
-        print("  - mistralai/Mistral-7B-Instruct-v0.3")
-        print("  - NousResearch/Nous-Hermes-2-Yi-34B")
         sys.exit(1)
 
     model_name = sys.argv[1]
