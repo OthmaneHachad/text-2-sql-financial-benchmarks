@@ -104,18 +104,6 @@ sectors ─────────────┘
 **Schema reasoning**: Requires understanding of multi-table relationships and foreign keys  
 **Ambiguity handling**: Scale, transformation, and seasonal adjustment interpretation
 
-### Comparison to Standard Benchmarks
-
-| Aspect | Spider/WikiSQL | This Database |
-|--------|---------------|---------------|
-| Domain | General/synthetic | Financial (specialized) |
-| Schema complexity | 1-5 tables | 6 tables with FKs |
-| Terminology | Simple | Domain-specific |
-| Data source | Synthetic | Real-world (IMF/World Bank) |
-| Temporal depth | Limited | 50+ years |
-| Metadata richness | Minimal | Extensive |
-
-
 ## Dataset Statistics
 
 ### Size Metrics
