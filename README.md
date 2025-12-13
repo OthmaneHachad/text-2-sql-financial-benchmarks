@@ -2,6 +2,8 @@
 
 This repository contains the complete implementation and evaluation of two Text-to-SQL frameworks on a custom economic database: **MAGIC** (Multi-Agent Guideline-Integrated Prompting) and **FinSQL** (Fine-tuning with Schema Linking).
 
+[Link to Paper](https://drive.google.com/file/d/18qQixz4o-TkTYw6SrAKBGv8ZL56dU-Dj/view?usp=sharing)
+
 ## Overview
 
 We evaluate multiple approaches to Text-to-SQL generation on a unified economic database containing IMF Government Finance Statistics (GFS) and World Bank Global Economic Monitor (GEM) data:
@@ -252,21 +254,6 @@ Each module has detailed documentation:
 - `enhanced_magic/README.md` - MAGIC evaluation scripts
 - `finsql/README.md` - FinSQL training and evaluation
 - `data/README.md` - Data structure and regeneration
-
----
-
-## Citation
-
-If you use this code or data, please cite:
-
-```bibtex
-@misc{economic-text2sql-2025,
-  title={Text-to-SQL for Finance: Evaluating MAGIC and FinSQL Frameworks},
-  author={Othmane Hachad},
-  year={2025},
-  url={https://github.com/OthmaneHachad/text-2-sql-financial-benchmarks}
-}
-```
 
 ---
 
